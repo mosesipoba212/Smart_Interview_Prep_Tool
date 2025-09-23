@@ -154,10 +154,11 @@ class MockInterviewSimulator:
         
         session = {
             'id': f"interview_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            'type': interview_type,
+            'interview_type': interview_type,
+            'type': interview_type,  # Keep both for backward compatibility
             'difficulty': difficulty,
-            'company': company,
-            'role': role,
+            'company': company or 'General',
+            'role': role or 'General',
             'questions': questions,
             'current_question': 0,
             'responses': [],
@@ -172,33 +173,70 @@ class MockInterviewSimulator:
         """Generate questions for the interview session"""
         questions = []
         
-        # Get base questions from question bank
+        # Get base questions from question bank first
         if interview_type in self.question_bank and difficulty in self.question_bank[interview_type]:
             base_questions = self.question_bank[interview_type][difficulty]
-            # Take more questions from template bank if AI fails
+            # Take all available questions from template bank as backup
             questions.extend(random.sample(base_questions, min(5, len(base_questions))))
+            print(f"✅ Got {len(questions)} template questions for {interview_type} - {difficulty}")
         
-        # Generate additional AI-powered questions
+        # Try to generate AI-powered questions (but don't fail if it doesn't work)
         try:
             ai_questions = self._generate_ai_questions(interview_type, difficulty, company, role)
-            if ai_questions:
+            if ai_questions and len(ai_questions) > 0:
                 # Replace some template questions with AI questions if available
                 questions = questions[:3] + ai_questions[:2]
+                print(f"✅ Enhanced with {len(ai_questions)} AI-generated questions")
         except Exception as e:
             print(f"⚠️ AI question generation failed: {e}")
-            print(f"💡 Using template questions from question bank")
+            print(f"💡 Continuing with template questions from question bank")
         
-        # Ensure we always have at least 3 questions
+        # Ensure we always have at least 3 questions - add more fallbacks if needed
         if len(questions) < 3:
             print(f"❌ Not enough questions generated, adding default fallbacks")
             fallback_questions = [
-                "Tell me about your experience and background",
-                "What interests you most about this role?",
-                "Describe a challenging problem you've solved recently"
+                {
+                    'question': "Tell me about your experience and background in this field.",
+                    'type': interview_type,
+                    'difficulty': 'Easy'
+                },
+                {
+                    'question': "What interests you most about this role and our company?",
+                    'type': interview_type,
+                    'difficulty': 'Easy'
+                },
+                {
+                    'question': "Describe a challenging problem you've solved recently and your approach.",
+                    'type': interview_type,
+                    'difficulty': 'Medium'
+                },
+                {
+                    'question': "How do you handle working under pressure and tight deadlines?",
+                    'type': interview_type,
+                    'difficulty': 'Medium'
+                },
+                {
+                    'question': "Where do you see yourself professionally in the next 3-5 years?",
+                    'type': interview_type,
+                    'difficulty': 'Easy'
+                }
             ]
-            questions.extend(fallback_questions[:3-len(questions)])
+            questions.extend(fallback_questions[:5-len(questions)])
         
-        return questions[:5]  # Limit to 5 questions per session
+        # Convert string questions to objects if needed
+        formatted_questions = []
+        for q in questions[:5]:  # Limit to 5 questions per session
+            if isinstance(q, str):
+                formatted_questions.append({
+                    'question': q,
+                    'type': interview_type,
+                    'difficulty': difficulty
+                })
+            else:
+                formatted_questions.append(q)
+        
+        print(f"🎯 Final question set: {len(formatted_questions)} questions ready")
+        return formatted_questions
     
     def _generate_ai_questions(self, interview_type, difficulty, company=None, role=None):
         """Generate AI-powered interview questions"""
@@ -230,12 +268,16 @@ class MockInterviewSimulator:
             print(f"🔄 Using template-based question generation instead...")
             return []
     
-    def submit_answer(self, session_id, question_index, answer, response_time=None):
+    def submit_answer(self, session_id, question_index, answer, response_time=None, self_score=None):
         """Submit an answer for evaluation"""
         # In a real implementation, you'd store session data in a database
         # For now, we'll return immediate feedback
         
         feedback = self._evaluate_answer(answer, question_index, session_id)
+        
+        # Include self-assessment score if provided
+        if self_score is not None:
+            feedback['self_score'] = self_score
         
         response_data = {
             'question_index': question_index,
@@ -246,6 +288,20 @@ class MockInterviewSimulator:
         }
         
         return response_data
+    
+    def calculate_session_score(self, session_data):
+        """Calculate overall session score from individual question scores"""
+        if not session_data.get('responses'):
+            return 0
+        
+        scores = []
+        for response in session_data['responses']:
+            feedback = response.get('feedback', {})
+            # Use AI score if available, otherwise use self-score, default to 5
+            score = feedback.get('score', feedback.get('self_score', 5))
+            scores.append(score)
+        
+        return round(sum(scores) / len(scores), 1) if scores else 0
     
     def _evaluate_answer(self, answer, question_index, session_id):
         """Evaluate an interview answer using AI"""

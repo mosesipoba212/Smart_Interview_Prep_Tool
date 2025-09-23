@@ -6,9 +6,10 @@ Clean, optimized main application entry point
 
 import os
 import sys
+import sqlite3
 from datetime import datetime
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 
 # Add src directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
@@ -253,6 +254,123 @@ def performance_stats():
             'stats': {'total_interviews': 0, 'average_rating': 0, 'success_rate': 0}
         })
 
+@app.route('/save-mock-interview-score', methods=['POST'])
+def save_mock_interview_score():
+    """💾 Save mock interview session score"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        # Extract session data
+        session_id = data.get('session_id')
+        interview_type = data.get('interview_type', 'general')
+        difficulty = data.get('difficulty', 'medium')
+        overall_score = data.get('overall_score', 0)
+        question_scores = data.get('question_scores', [])
+        company = data.get('company', 'Practice')
+        role = data.get('role', 'General')
+        
+        # Create interview data for logging
+        interview_data = {
+            'interview': {
+                'company': company,
+                'position': role,
+                'interview_type': interview_type,
+                'interview_date': datetime.now().isoformat(),
+                'outcome': 'practice',
+                'overall_rating': overall_score,
+                'preparation_hours': 0,
+                'notes': f'Mock interview - {difficulty} difficulty'
+            },
+            'questions': []
+        }
+        
+        # Add question performance data
+        for i, score in enumerate(question_scores):
+            if score is not None:
+                interview_data['questions'].append({
+                    'question_text': f'Question {i+1}',
+                    'question_type': interview_type,
+                    'difficulty': difficulty,
+                    'confidence_rating': score,
+                    'time_taken': 0,
+                    'notes': 'Mock interview question'
+                })
+        
+        # Log to performance tracker
+        result = prep_app.performance_tracker.log_performance(interview_data)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Mock interview score saved successfully',
+            'interview_id': result.get('interview_id')
+        })
+        
+    except Exception as e:
+        log_error(ErrorCodes.MOCK_INTERVIEW_SAVE_FAILED, f"Failed to save mock interview score: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/get-score-progress')
+def get_score_progress():
+    """📈 Get score progress data for charts"""
+    try:
+        # Get recent interview scores from performance tracker
+        conn = sqlite3.connect(prep_app.performance_tracker.db_path)
+        cursor = conn.cursor()
+        
+        # Get scores over time
+        cursor.execute('''
+            SELECT interview_date, overall_rating, interview_type, company
+            FROM interviews 
+            WHERE overall_rating > 0 
+            ORDER BY interview_date DESC 
+            LIMIT 50
+        ''')
+        
+        scores_data = []
+        for row in cursor.fetchall():
+            scores_data.append({
+                'date': row[0],
+                'score': row[1],
+                'type': row[2],
+                'company': row[3]
+            })
+        
+        # Get average scores by interview type
+        cursor.execute('''
+            SELECT interview_type, AVG(overall_rating) as avg_score, COUNT(*) as count
+            FROM interviews 
+            WHERE overall_rating > 0 
+            GROUP BY interview_type
+        ''')
+        
+        type_averages = {}
+        for row in cursor.fetchall():
+            type_averages[row[0]] = {
+                'average': round(row[1], 1),
+                'count': row[2]
+            }
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'scores_over_time': scores_data,
+            'averages_by_type': type_averages
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'scores_over_time': [],
+            'averages_by_type': {}
+        }), 500
+
 # ========================================
 # 📚 QUESTION BANKS ROUTES
 # ========================================
@@ -313,7 +431,7 @@ def mock_interview_page():
         default_interview_types = {
             'technical': {
                 'name': 'Technical Interview',
-                'difficulty_levels': ['Beginner', 'Intermediate', 'Advanced']
+                'difficulty_levels': ['Easy', 'Medium', 'Hard']
             },
             'behavioral': {
                 'name': 'Behavioral Interview',  
@@ -341,17 +459,32 @@ def mock_interview_page():
         # Return a basic error page instead of crashing
         return f"<h1>Mock Interview Page Error</h1><p>Error: {e}</p><p>Please check the console for details.</p>", 500
 
+@app.route('/test_frontend.html')
+def test_frontend():
+    """Test frontend for debugging"""
+    return send_from_directory('.', 'test_frontend.html')
+
 @app.route('/mock-interview/start', methods=['POST'])
 def start_mock_interview():
     """🚀 Start a new mock interview session"""
     try:
         data = request.json
+        print(f"🔍 Received data: {data}")
+        interview_type = data.get('interview_type')
+        print(f"🔍 Interview type: {interview_type}")
+        
         session = prep_app.mock_interview.start_interview(
-            interview_type=data.get('interview_type'),
+            interview_type=interview_type,
             difficulty=data.get('difficulty'),
             company=data.get('company'),
             role=data.get('role')
         )
+        
+        # Add debugging info
+        print(f"🔍 Session created with {len(session['questions'])} questions")
+        print(f"🔍 Session interview_type: {session.get('interview_type')}")
+        print(f"🔍 First question: {session['questions'][0]}")
+        print(f"🔍 First question type: {type(session['questions'][0])}")
         
         return jsonify({
             'success': True,

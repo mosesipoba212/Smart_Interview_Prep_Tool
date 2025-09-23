@@ -216,6 +216,107 @@
             font-size: 14px;
         }
         
+        .score-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 32px;
+        }
+        
+        .score-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f5f5f7;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .score-input {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .score-label {
+            font-size: 14px;
+            color: #a1a1a6;
+        }
+        
+        .score-range {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 200px;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+        
+        .score-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0071e3;
+            cursor: pointer;
+        }
+        
+        .score-range::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0071e3;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .score-display {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0071e3;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .score-indicators {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #a1a1a6;
+            margin-top: 8px;
+        }
+        
+        .session-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0071e3;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #a1a1a6;
+        }
+        
         .question-display {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
@@ -351,6 +452,34 @@
     <script>
         // Wait for DOM to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
+            // Check browser compatibility immediately
+            console.log('🔍 Browser speech synthesis support:');
+            console.log('- speechSynthesis available:', 'speechSynthesis' in window);
+            console.log('- speechSynthesis.speak available:', typeof speechSynthesis?.speak);
+            console.log('- User agent:', navigator.userAgent);
+            
+            // Force load voices immediately
+            if ('speechSynthesis' in window) {
+                const voices = speechSynthesis.getVoices();
+                console.log('🔊 Initial voices available:', voices.length);
+                
+                // Force voices to load
+                speechSynthesis.addEventListener('voiceschanged', function() {
+                    const newVoices = speechSynthesis.getVoices();
+                    console.log('🔊 Voices changed, now available:', newVoices.length);
+                });
+                
+                // Test basic functionality
+                setTimeout(() => {
+                    try {
+                        const testUtterance = new SpeechSynthesisUtterance('');
+                        console.log('🔊 Created test utterance successfully');
+                    } catch (error) {
+                        console.error('🔊 Cannot create SpeechSynthesisUtterance:', error);
+                    }
+                }, 100);
+            }
+            
             const interviewTypes = {
                 'technical': {
                     'name': 'Technical Interview',
@@ -448,7 +577,17 @@
                 const role = document.getElementById('role').value;
                 const autoPlay = document.getElementById('autoPlayVoice').checked;
                 
+                // Store voice settings globally for use during interview
+                window.selectedVoiceIndex = voiceSelect.value || 0;
+                window.selectedRate = parseFloat(document.getElementById('speechRate').value) || 1.0;
+                window.selectedPitch = parseFloat(document.getElementById('speechPitch').value) || 1.0;
+                
                 console.log('Starting interview:', {type, difficulty, company, role, autoPlay});
+                console.log('Voice settings stored:', {
+                    voiceIndex: window.selectedVoiceIndex,
+                    rate: window.selectedRate,
+                    pitch: window.selectedPitch
+                });
                 
                 // Show loading state
                 const startBtn = document.getElementById('startBtn');
@@ -472,6 +611,11 @@
                     
                     const data = await response.json();
                     
+                    console.log('Received session data:', data);
+                    console.log('Questions array:', data.session?.questions);
+                    console.log('First question:', data.session?.questions[0]);
+                    console.log('First question type:', typeof data.session?.questions[0]);
+                    
                     if (data.success && data.session) {
                         showInterviewSession(data.session, autoPlay);
                     } else {
@@ -487,29 +631,70 @@
             };
             
             window.testVoice = function() {
+                console.log('🔊 Testing voice...');
+                
+                if (!('speechSynthesis' in window)) {
+                    alert('❌ Speech synthesis not supported in this browser');
+                    return;
+                }
+                
+                // Stop any current speech first
+                speechSynthesis.cancel();
+                
                 const voices = speechSynthesis.getVoices();
                 const selectedVoiceIndex = voiceSelect.value;
                 const speechRate = document.getElementById('speechRate').value;
                 const speechPitch = document.getElementById('speechPitch').value;
                 
-                if (!selectedVoiceIndex) {
+                console.log('Available voices:', voices.length);
+                console.log('Selected voice index:', selectedVoiceIndex);
+                
+                if (!selectedVoiceIndex && voices.length > 0) {
                     alert('Please select a voice first!');
                     return;
                 }
                 
-                const utterance = new SpeechSynthesisUtterance('Hello! This is a test of your selected voice settings. Good luck with your interview preparation!');
-                utterance.voice = voices[selectedVoiceIndex];
+                const utterance = new SpeechSynthesisUtterance('This is a voice test. Your interview questions will sound like this.');
+                
+                if (voices[selectedVoiceIndex]) {
+                    utterance.voice = voices[selectedVoiceIndex];
+                    console.log('Using voice:', voices[selectedVoiceIndex].name);
+                } else {
+                    console.log('Using default voice');
+                }
+                
                 utterance.rate = parseFloat(speechRate);
                 utterance.pitch = parseFloat(speechPitch);
                 
+                // Prevent the test from repeating
+                utterance.onend = function() {
+                    console.log('🔊 Voice test completed');
+                };
+                
+                utterance.onerror = function(event) {
+                    console.error('🔊 Test speech error:', event.error);
+                    alert('❌ Speech test failed: ' + event.error);
+                };
+                
+                // Make sure we only speak once
                 speechSynthesis.speak(utterance);
-                console.log('Testing voice:', voices[selectedVoiceIndex].name);
             };
 
             // Interview session display
             window.showInterviewSession = function(session, autoPlay) {
+                console.log('showInterviewSession called with:', session);
+                console.log('Questions:', session.questions);
+                console.log('First question:', session.questions[0]);
+                console.log('First question type:', typeof session.questions[0]);
+                
                 // Hide configuration section
                 document.getElementById('configuration').style.display = 'none';
+                
+                // Get the first question text properly
+                const firstQuestion = session.questions[0];
+                const firstQuestionText = typeof firstQuestion === 'object' ? firstQuestion.question : firstQuestion;
+                
+                console.log('First question text:', firstQuestionText);
                 
                 // Create interview session UI
                 const container = document.querySelector('.container');
@@ -529,10 +714,33 @@
                         <div class="card">
                             <h3 id="question-title">📝 Question 1</h3>
                             <div id="question-text" class="question-display">
-                                ${session.questions[0].question}
+                                ${firstQuestionText}
                             </div>
                             <div class="question-actions">
-                                <button class="btn btn-secondary" onclick="speakQuestion()">🔊 Repeat Question</button>
+                                <button class="btn btn-secondary" onclick="
+                                    console.log('🔊 DIRECT: Button clicked!');
+                                    try {
+                                        const text = document.getElementById('question-text').textContent;
+                                        console.log('🔊 DIRECT: Text found:', text);
+                                        speechSynthesis.cancel();
+                                        const utterance = new SpeechSynthesisUtterance(text);
+                                        utterance.rate = 0.8;
+                                        utterance.onstart = () => console.log('🔊 DIRECT: Started!');
+                                        utterance.onerror = (e) => console.log('🔊 DIRECT: Error:', e.error);
+                                        speechSynthesis.speak(utterance);
+                                        console.log('🔊 DIRECT: Command sent!');
+                                    } catch(e) {
+                                        console.error('🔊 DIRECT: Exception:', e);
+                                        alert('Error: ' + e.message);
+                                    }
+                                ">🔊 Repeat Question</button>
+                                <button class="btn btn-secondary" onclick="
+                                    console.log('🔊 BASIC TEST clicked!');
+                                    speechSynthesis.cancel();
+                                    speechSynthesis.speak(new SpeechSynthesisUtterance('Hello test'));
+                                    console.log('🔊 BASIC TEST sent!');
+                                ">🔊 Basic Test</button>
+                                <button class="btn btn-secondary" onclick="testSpeechNow()">🔊 Test Speech Now</button>
                                 <button class="btn" onclick="nextQuestion()">Next Question ➡️</button>
                             </div>
                         </div>
@@ -540,9 +748,50 @@
                         <div class="card">
                             <h3>🎤 Your Answer</h3>
                             <textarea id="answer-input" placeholder="Type your answer here..." style="width: 100%; min-height: 150px; padding: 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #f5f5f7; font-size: 16px; resize: vertical;"></textarea>
+                            
+                            <!-- Score Input Section -->
+                            <div class="score-container" style="margin-top: 20px;">
+                                <div class="score-title">📊 Rate Your Performance</div>
+                                <div class="score-input">
+                                    <span class="score-label">Poor</span>
+                                    <input type="range" id="score-range" class="score-range" min="1" max="10" value="5" 
+                                           oninput="document.getElementById('score-display').textContent = this.value">
+                                    <span class="score-label">Excellent</span>
+                                </div>
+                                <div class="score-display" id="score-display">5</div>
+                                <div class="score-indicators">
+                                    <span>1 - Poor</span>
+                                    <span>5 - Average</span>
+                                    <span>10 - Excellent</span>
+                                </div>
+                            </div>
+                            
                             <div class="answer-actions" style="margin-top: 16px;">
                                 <button class="btn btn-secondary" onclick="endInterview()">🏁 End Interview</button>
                                 <button class="btn" onclick="submitAnswer()">Submit Answer ✅</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Session Statistics -->
+                        <div class="card">
+                            <h3>📈 Session Progress</h3>
+                            <div class="session-stats">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="current-average">0.0</div>
+                                    <div class="stat-label">Current Average</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="questions-completed">0</div>
+                                    <div class="stat-label">Questions Completed</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="highest-score">0</div>
+                                    <div class="stat-label">Highest Score</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="session-time">0m</div>
+                                    <div class="stat-label">Session Time</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -560,6 +809,8 @@
                 window.currentSession = session;
                 window.currentQuestionIndex = 0;
                 window.autoPlayEnabled = autoPlay;
+                window.sessionStartTime = Date.now(); // Initialize session start time
+                window.questionScores = []; // Initialize scores array
                 
                 // Auto-play first question if enabled
                 if (autoPlay) {
@@ -569,37 +820,238 @@
                 console.log('Interview session started:', session);
             };
 
-            // Interview session functions
+            // Interview session functions - SIMPLIFIED VERSION
             window.speakQuestion = function() {
-                const question = window.currentSession.questions[window.currentQuestionIndex].question;
-                const voices = speechSynthesis.getVoices();
-                const selectedVoiceIndex = voiceSelect.value;
-                const speechRate = document.getElementById('speechRate').value;
-                const speechPitch = document.getElementById('speechPitch').value;
+                console.log('🔊 SIMPLE: Repeat Question clicked');
                 
-                const utterance = new SpeechSynthesisUtterance(question);
-                if (selectedVoiceIndex && voices[selectedVoiceIndex]) {
-                    utterance.voice = voices[selectedVoiceIndex];
+                // Get the question text from the page directly
+                const questionElement = document.getElementById('question-text');
+                if (!questionElement) {
+                    alert('❌ Could not find question text element');
+                    return;
                 }
-                utterance.rate = parseFloat(speechRate);
-                utterance.pitch = parseFloat(speechPitch);
                 
-                speechSynthesis.speak(utterance);
+                const questionText = questionElement.textContent || questionElement.innerText;
+                console.log('🔊 SIMPLE: Text to speak:', questionText);
+                
+                if (!questionText || questionText.trim() === '') {
+                    alert('❌ No question text found');
+                    return;
+                }
+                
+                // Simple, direct speech
+                if ('speechSynthesis' in window) {
+                    try {
+                        // Cancel any existing speech
+                        speechSynthesis.cancel();
+                        
+                        // Create and speak utterance
+                        const utterance = new SpeechSynthesisUtterance(questionText.trim());
+                        utterance.rate = 0.8;
+                        utterance.pitch = 1.0;
+                        utterance.volume = 1.0;
+                        
+                        utterance.onstart = () => console.log('🔊 ✅ Speech started!');
+                        utterance.onend = () => console.log('🔊 ✅ Speech ended!');
+                        utterance.onerror = (e) => {
+                            console.error('🔊 ❌ Speech error:', e.error);
+                            alert('Speech error: ' + e.error);
+                        };
+                        
+                        speechSynthesis.speak(utterance);
+                        console.log('🔊 ✅ Speech command sent successfully');
+                        
+                    } catch (error) {
+                        console.error('🔊 ❌ Exception:', error);
+                        alert('Speech failed: ' + error.message);
+                    }
+                } else {
+                    alert('❌ Speech synthesis not supported in this browser');
+                }
+            };
+            
+            function speakWithVoice(text, voices) {
+                console.log('🔊 speakWithVoice called with text:', text);
+                console.log('🔊 Available voices for speech:', voices.length);
+                
+                // Stop any current speech first to prevent overlapping
+                speechSynthesis.cancel();
+                
+                if (!text || text.trim() === '') {
+                    console.error('❌ Empty text provided to speakWithVoice');
+                    alert('❌ No text to speak');
+                    return;
+                }
+                
+                const utterance = new SpeechSynthesisUtterance(text.trim());
+                
+                // Try to use stored voice settings or defaults
+                const storedVoiceIndex = parseInt(window.selectedVoiceIndex) || 0;
+                const storedRate = parseFloat(window.selectedRate) || 1.0;
+                const storedPitch = parseFloat(window.selectedPitch) || 1.0;
+                
+                console.log('🔊 Voice settings:', {
+                    voiceIndex: storedVoiceIndex,
+                    rate: storedRate,
+                    pitch: storedPitch,
+                    availableVoices: voices.length
+                });
+                
+                if (voices && voices.length > 0 && voices[storedVoiceIndex]) {
+                    utterance.voice = voices[storedVoiceIndex];
+                    console.log('🔊 Selected voice:', voices[storedVoiceIndex].name);
+                } else {
+                    console.log('🔊 Using default system voice');
+                }
+                
+                utterance.rate = storedRate;
+                utterance.pitch = storedPitch;
+                utterance.volume = 1.0;
+                
+                // Add event listeners for debugging
+                utterance.onstart = function() {
+                    console.log('🔊 Question speech started successfully');
+                };
+                
+                utterance.onend = function() {
+                    console.log('🔊 Question speech ended successfully');
+                };
+                
+                utterance.onerror = function(event) {
+                    console.error('🔊 Speech error:', event.error);
+                    console.error('🔊 Error details:', event);
+                    alert('❌ Speech error: ' + event.error + '. Try selecting a different voice or refresh the page.');
+                };
+                
+                utterance.onpause = function() {
+                    console.log('🔊 Speech paused');
+                };
+                
+                utterance.onresume = function() {
+                    console.log('🔊 Speech resumed');
+                };
+                
+                // Attempt to speak
+                try {
+                    console.log('🔊 Attempting to speak...');
+                    speechSynthesis.speak(utterance);
+                    console.log('🔊 Speech command sent successfully');
+                } catch (error) {
+                    console.error('🔊 Exception while speaking:', error);
+                    alert('❌ Speech failed: ' + error.message);
+                }
+            }
+
+            // Simple test function to verify speech works
+            window.testSpeechNow = function() {
+                console.log('🔊 Testing speech immediately...');
+                
+                try {
+                    speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance('This is a test. Can you hear me?');
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    utterance.volume = 1.0;
+                    
+                    utterance.onstart = function() {
+                        console.log('🔊 ✅ Test speech started!');
+                        alert('✅ Speech is working!');
+                    };
+                    
+                    utterance.onend = function() {
+                        console.log('🔊 ✅ Test speech ended!');
+                    };
+                    
+                    utterance.onerror = function(event) {
+                        console.error('🔊 ❌ Test speech error:', event.error);
+                        alert('❌ Test speech error: ' + event.error);
+                    };
+                    
+                    speechSynthesis.speak(utterance);
+                    console.log('🔊 Test speech command sent');
+                    
+                } catch (error) {
+                    console.error('🔊 Test speech exception:', error);
+                    alert('❌ Test speech failed: ' + error.message);
+                }
             };
 
+            // Simple fallback speech function
+            window.speakQuestionSimple = function() {
+                console.log('🔊 Simple speech function called');
+                
+                if (!window.currentSession || !window.currentSession.questions) {
+                    alert('❌ No interview session active');
+                    return;
+                }
+                
+                const currentQuestion = window.currentSession.questions[window.currentQuestionIndex];
+                const questionText = typeof currentQuestion === 'object' ? currentQuestion.question : currentQuestion;
+                
+                if (!questionText) {
+                    alert('❌ No question text available');
+                    return;
+                }
+                
+                if (!('speechSynthesis' in window)) {
+                    alert('❌ Speech synthesis not supported in this browser');
+                    return;
+                }
+                
+                // Simple speech without complex voice settings
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(questionText);
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                
+                utterance.onstart = function() {
+                    console.log('🔊 Simple speech started');
+                };
+                
+                utterance.onend = function() {
+                    console.log('🔊 Simple speech ended');
+                };
+                
+                utterance.onerror = function(event) {
+                    console.error('🔊 Simple speech error:', event.error);
+                    alert('❌ Even simple speech failed: ' + event.error);
+                };
+                
+                try {
+                    speechSynthesis.speak(utterance);
+                    console.log('🔊 Simple speech command sent');
+                } catch (error) {
+                    console.error('🔊 Simple speech exception:', error);
+                    alert('❌ Speech failed: ' + error.message);
+                }
+            };
+
+            // Initialize session tracking variables
+            window.questionScores = [];
+            window.sessionStartTime = null;
+            
             window.nextQuestion = function() {
                 if (window.currentQuestionIndex < window.currentSession.questions.length - 1) {
                     window.currentQuestionIndex++;
-                    const question = window.currentSession.questions[window.currentQuestionIndex];
+                    const currentQuestion = window.currentSession.questions[window.currentQuestionIndex];
+                    const questionText = typeof currentQuestion === 'object' ? currentQuestion.question : currentQuestion;
                     
                     document.getElementById('question-title').textContent = `📝 Question ${window.currentQuestionIndex + 1}`;
-                    document.getElementById('question-text').textContent = question.question;
+                    document.getElementById('question-text').textContent = questionText;
                     document.getElementById('answer-input').value = '';
+                    
+                    // Reset score input
+                    document.getElementById('score-range').value = 5;
+                    document.getElementById('score-display').textContent = '5';
                     
                     // Update progress
                     const progress = ((window.currentQuestionIndex + 1) / window.currentSession.questions.length) * 100;
                     document.querySelector('.progress-fill').style.width = progress + '%';
                     document.querySelector('.progress-text').textContent = `Question ${window.currentQuestionIndex + 1} of ${window.currentSession.questions.length}`;
+                    
+                    // Update session stats
+                    updateSessionStats();
                     
                     // Auto-play if enabled
                     if (window.autoPlayEnabled) {
@@ -607,7 +1059,7 @@
                     }
                 } else {
                     alert('🎉 Interview completed! All questions answered.');
-                    endInterview();
+                    showInterviewSummary();
                 }
             };
 
@@ -618,18 +1070,131 @@
                     return;
                 }
                 
-                // Store answer (in a real app, this would be sent to backend)
-                const currentQuestion = window.currentSession.questions[window.currentQuestionIndex];
-                currentQuestion.answer = answer;
+                // Get the score for this question
+                const score = parseInt(document.getElementById('score-range').value);
+                window.questionScores.push(score);
                 
-                alert('✅ Answer submitted! Moving to next question...');
+                // Store answer and score
+                const currentQuestion = window.currentSession.questions[window.currentQuestionIndex];
+                if (typeof currentQuestion === 'object') {
+                    currentQuestion.answer = answer;
+                    currentQuestion.score = score;
+                } else {
+                    // For string questions, we can still store the answer and score
+                    window.currentSession.answers = window.currentSession.answers || [];
+                    window.currentSession.scores = window.currentSession.scores || [];
+                    window.currentSession.answers[window.currentQuestionIndex] = answer;
+                    window.currentSession.scores[window.currentQuestionIndex] = score;
+                }
+                
+                alert(`✅ Answer submitted with score ${score}/10! Moving to next question...`);
                 nextQuestion();
+            };
+            
+            window.updateSessionStats = function() {
+                if (window.questionScores.length === 0) return;
+                
+                // Current average
+                const average = window.questionScores.reduce((a, b) => a + b, 0) / window.questionScores.length;
+                document.getElementById('current-average').textContent = average.toFixed(1);
+                
+                // Questions completed
+                document.getElementById('questions-completed').textContent = window.questionScores.length;
+                
+                // Highest score
+                const highest = Math.max(...window.questionScores);
+                document.getElementById('highest-score').textContent = highest;
+                
+                // Session time
+                if (window.sessionStartTime) {
+                    const elapsed = Math.floor((Date.now() - window.sessionStartTime) / 60000);
+                    document.getElementById('session-time').textContent = `${elapsed}m`;
+                }
+            };
+            
+            window.saveInterviewScore = async function() {
+                try {
+                    const overallScore = window.questionScores.length > 0 
+                        ? window.questionScores.reduce((a, b) => a + b, 0) / window.questionScores.length 
+                        : 0;
+                    
+                    const scoreData = {
+                        session_id: window.currentSession.id,
+                        interview_type: window.currentSession.interview_type || window.currentSession.type,
+                        difficulty: window.currentSession.difficulty,
+                        overall_score: Math.round(overallScore * 10) / 10,
+                        question_scores: window.questionScores,
+                        company: window.currentSession.company || 'Practice',
+                        role: window.currentSession.role || 'General'
+                    };
+                    
+                    const response = await fetch('/save-mock-interview-score', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(scoreData)
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        console.log('✅ Interview score saved successfully');
+                        return true;
+                    } else {
+                        console.error('❌ Failed to save score:', result.error);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('❌ Error saving score:', error);
+                    return false;
+                }
+            };
+            
+            window.showInterviewSummary = function() {
+                const average = window.questionScores.length > 0 
+                    ? window.questionScores.reduce((a, b) => a + b, 0) / window.questionScores.length 
+                    : 0;
+                
+                const highest = window.questionScores.length > 0 ? Math.max(...window.questionScores) : 0;
+                const lowest = window.questionScores.length > 0 ? Math.min(...window.questionScores) : 0;
+                
+                const summary = `
+🎯 Interview Complete!
+
+📊 Performance Summary:
+• Questions Answered: ${window.questionScores.length}
+• Average Score: ${average.toFixed(1)}/10
+• Highest Score: ${highest}/10
+• Lowest Score: ${lowest}/10
+
+Your scores: ${window.questionScores.join(', ')}
+
+Saving your progress...
+                `;
+                
+                alert(summary);
+                
+                // Save the score
+                saveInterviewScore().then(saved => {
+                    if (saved) {
+                        alert('✅ Your progress has been saved! You can view your analytics to see improvement over time.');
+                    }
+                    
+                    if (confirm('Would you like to start another interview or return to the dashboard?')) {
+                        location.reload(); // Start another interview
+                    } else {
+                        window.location.href = '/'; // Return to dashboard
+                    }
+                });
             };
 
             window.endInterview = function() {
-                if (confirm('Are you sure you want to end the interview?')) {
-                    // Reload page to return to configuration
-                    location.reload();
+                if (confirm('Are you sure you want to end the interview? Your current progress will be saved.')) {
+                    if (window.questionScores.length > 0) {
+                        showInterviewSummary();
+                    } else {
+                        location.reload();
+                    }
                 }
             };
 

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics Dashboard - Smart Interview Prep</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -110,16 +111,47 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             margin-top: 24px;
-            min-height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            height: 400px;
         }
         
-        .chart-placeholder {
-            color: #86868b;
-            font-size: 18px;
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+        
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f5f5f7;
+            margin-bottom: 16px;
             text-align: center;
+        }
+        
+        .no-data {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: #86868b;
+            text-align: center;
+        }
+        
+        .no-data-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .no-data-text {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .no-data-subtext {
+            font-size: 14px;
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -158,42 +190,263 @@
             </div>
         </div>
         
+        <div class="chart-grid">
+            <div class="chart-container">
+                <div class="chart-title">📈 Score Progress Over Time</div>
+                <canvas id="scoreProgressChart"></canvas>
+                <div id="scoreProgressNoData" class="no-data" style="display: none;">
+                    <div class="no-data-icon">📊</div>
+                    <div class="no-data-text">No Score Data Yet</div>
+                    <div class="no-data-subtext">Complete some mock interviews to see your progress</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">🎯 Performance by Interview Type</div>
+                <canvas id="typePerformanceChart"></canvas>
+                <div id="typePerformanceNoData" class="no-data" style="display: none;">
+                    <div class="no-data-icon">🎯</div>
+                    <div class="no-data-text">No Performance Data</div>
+                    <div class="no-data-subtext">Try different interview types to see comparisons</div>
+                </div>
+            </div>
+        </div>
+        
         <div class="chart-container">
-            <div class="chart-placeholder">
-                📊 Performance trends chart will be displayed here
+            <div class="chart-title">📊 Recent Interview Scores Distribution</div>
+            <canvas id="scoreDistributionChart"></canvas>
+            <div id="scoreDistributionNoData" class="no-data" style="display: none;">
+                <div class="no-data-icon">📈</div>
+                <div class="no-data-text">No Score Distribution Available</div>
+                <div class="no-data-subtext">Complete more interviews to see score patterns</div>
             </div>
         </div>
     </div>
     
     <script>
+        // Chart configurations
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#f5f5f7'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#86868b'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#86868b'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        };
+
+        let scoreProgressChart = null;
+        let typePerformanceChart = null;
+        let scoreDistributionChart = null;
+
         // Load analytics data when page loads
         window.addEventListener('load', function() {
-            fetch('/performance-stats')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('totalInterviews').textContent = data.total_interviews || 0;
-                    document.getElementById('averageRating').textContent = (data.average_rating || 0).toFixed(1);
-                    
-                    // Calculate success rate if we have recent interviews
-                    if (data.recent_interviews && data.recent_interviews.length > 0) {
-                        const successful = data.recent_interviews.filter(interview => 
-                            interview.outcome === 'success' || interview.outcome === 'offer'
-                        ).length;
-                        const successRate = Math.round((successful / data.recent_interviews.length) * 100);
-                        document.getElementById('successRate').textContent = successRate + '%';
-                    }
-                    
-                    // Calculate total prep hours
-                    const totalHours = data.recent_interviews ? 
-                        data.recent_interviews.reduce((sum, interview) => 
-                            sum + (interview.preparation_hours || 0), 0
-                        ) : 0;
-                    document.getElementById('prepHours').textContent = totalHours;
-                })
-                .catch(error => {
-                    console.error('Error loading analytics:', error);
-                });
+            Promise.all([
+                fetch('/performance-stats').then(r => r.json()),
+                fetch('/get-score-progress').then(r => r.json())
+            ]).then(([statsData, progressData]) => {
+                // Update summary cards
+                updateSummaryCards(statsData);
+                
+                // Create charts
+                createScoreProgressChart(progressData);
+                createTypePerformanceChart(progressData);
+                createScoreDistributionChart(progressData);
+                
+            }).catch(error => {
+                console.error('Error loading analytics:', error);
+                showNoDataState();
+            });
         });
+
+        function updateSummaryCards(data) {
+            const stats = data.stats || {};
+            const interviewStats = stats.interview_stats || {};
+            
+            document.getElementById('totalInterviews').textContent = interviewStats.total_interviews || 0;
+            document.getElementById('averageRating').textContent = (interviewStats.average_rating || 0).toFixed(1);
+            document.getElementById('successRate').textContent = (interviewStats.success_rate || 0) + '%';
+            
+            // Calculate total prep hours from preparation stats
+            const prepStats = stats.preparation_effectiveness || {};
+            document.getElementById('prepHours').textContent = Math.round(prepStats.total_prep_time_hours || 0);
+        }
+
+        function createScoreProgressChart(data) {
+            const ctx = document.getElementById('scoreProgressChart').getContext('2d');
+            const scores = data.scores_over_time || [];
+            
+            if (scores.length === 0) {
+                document.getElementById('scoreProgressChart').style.display = 'none';
+                document.getElementById('scoreProgressNoData').style.display = 'flex';
+                return;
+            }
+
+            // Sort scores by date
+            scores.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            const labels = scores.map((item, index) => `Interview ${index + 1}`);
+            const scoreData = scores.map(item => item.score);
+            
+            scoreProgressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Interview Score',
+                        data: scoreData,
+                        borderColor: '#0071e3',
+                        backgroundColor: 'rgba(0, 113, 227, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y: {
+                            ...chartOptions.scales.y,
+                            min: 0,
+                            max: 10
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTypePerformanceChart(data) {
+            const ctx = document.getElementById('typePerformanceChart').getContext('2d');
+            const averages = data.averages_by_type || {};
+            
+            if (Object.keys(averages).length === 0) {
+                document.getElementById('typePerformanceChart').style.display = 'none';
+                document.getElementById('typePerformanceNoData').style.display = 'flex';
+                return;
+            }
+
+            const labels = Object.keys(averages);
+            const scores = labels.map(type => averages[type].average);
+            
+            const colors = [
+                '#0071e3', '#34c759', '#ff9500', '#ff3b30', 
+                '#af52de', '#ff2d92', '#5ac8fa', '#ffcc00'
+            ];
+            
+            typePerformanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.map(label => label.charAt(0).toUpperCase() + label.slice(1)),
+                    datasets: [{
+                        label: 'Average Score',
+                        data: scores,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y: {
+                            ...chartOptions.scales.y,
+                            min: 0,
+                            max: 10
+                        }
+                    }
+                }
+            });
+        }
+
+        function createScoreDistributionChart(data) {
+            const ctx = document.getElementById('scoreDistributionChart').getContext('2d');
+            const scores = data.scores_over_time || [];
+            
+            if (scores.length === 0) {
+                document.getElementById('scoreDistributionChart').style.display = 'none';
+                document.getElementById('scoreDistributionNoData').style.display = 'flex';
+                return;
+            }
+
+            // Create score distribution (1-10 buckets)
+            const distribution = new Array(10).fill(0);
+            scores.forEach(item => {
+                const scoreIndex = Math.min(Math.floor(item.score) - 1, 9);
+                if (scoreIndex >= 0) distribution[scoreIndex]++;
+            });
+            
+            const labels = Array.from({length: 10}, (_, i) => `${i + 1}`);
+            
+            scoreDistributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Interviews',
+                        data: distribution,
+                        backgroundColor: 'rgba(0, 113, 227, 0.6)',
+                        borderColor: '#0071e3',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        x: {
+                            ...chartOptions.scales.x,
+                            title: {
+                                display: true,
+                                text: 'Score Range',
+                                color: '#86868b'
+                            }
+                        },
+                        y: {
+                            ...chartOptions.scales.y,
+                            title: {
+                                display: true,
+                                text: 'Frequency',
+                                color: '#86868b'
+                            },
+                            ticks: {
+                                ...chartOptions.scales.y.ticks,
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function showNoDataState() {
+            document.getElementById('scoreProgressChart').style.display = 'none';
+            document.getElementById('scoreProgressNoData').style.display = 'flex';
+            document.getElementById('typePerformanceChart').style.display = 'none';
+            document.getElementById('typePerformanceNoData').style.display = 'flex';
+            document.getElementById('scoreDistributionChart').style.display = 'none';
+            document.getElementById('scoreDistributionNoData').style.display = 'flex';
+        }
     </script>
 </body>
 </html>
