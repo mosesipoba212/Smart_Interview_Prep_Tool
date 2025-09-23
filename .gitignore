@@ -1,0 +1,220 @@
+# ===========================================
+# 🔒 SENSITIVE FILES - NEVER COMMIT THESE
+# ===========================================
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# API Keys and Credentials
+credentials.json
+credentials_*.json
+!credentials_template.json
+token.json
+token_*.json
+client_secret*.json
+service_account*.json
+
+# Database files (contain user data)
+*.db
+*.sqlite
+*.sqlite3
+internship_tracker.db
+interview_performance.db
+
+# Log files (may contain sensitive info)
+*.log
+logs/
+smart_interview_prep_errors.log
+
+# ===========================================
+# 🐍 PYTHON FILES
+# ===========================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ===========================================
+# 🔧 DEVELOPMENT FILES
+# ===========================================
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# ===========================================
+# 🧪 TEST FILES
+# ===========================================
+
+# Test artifacts
+test_*.py
+simple_test.py
+test_server.py
+test_frontend.html
+test_button.html
+
+# Coverage files
+.coverage
+htmlcov/
+
+# ===========================================
+# 📱 APPLICATION SPECIFIC
+# ===========================================
+
+# User uploads and data
+uploads/
+user_data/
+exports/
+
+# Cache directories
+.cache/
+cache/
+
+# Session files
+flask_session/
+
+# Email attachments
+attachments/
+
+# Generated charts and reports
+charts/
+reports/
+*.png
+*.pdf
+!static/images/*.png
+!static/images/*.pdf
+
+# ===========================================
+# 🚀 DEPLOYMENT FILES
+# ===========================================
+
+# Cloud deployment configs (may contain secrets)
+app.yaml
+!app.yaml.example
+
+# Docker
+.dockerignore
+Dockerfile.prod
+
+# Heroku
+.env.prod
+
+# ===========================================
+# 📦 DEPENDENCIES
+# ===========================================
+
+# Node modules (if using any JS tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===========================================
+# 📊 DATA FILES
+# ===========================================
+
+# Large data files
+*.csv
+*.xlsx
+*.json
+!config/*.json
+!package.json
+
+# Backup files
+*.backup
+*.bak
+backup/
+
+# ===========================================
+# 🔐 SECURITY NOTES
+# ===========================================
+
+# This .gitignore protects:
+# - API keys and credentials
+# - User databases and personal data
+# - Environment variables
+# - Log files with potential sensitive info
+# - Development and test files
+# - System-generated files
+
+# IMPORTANT: Never commit files containing:
+# - API keys (OpenAI, Google, etc.)
+# - Database credentials
+# - User personal data
+# - Authentication tokens
+# - Email credentials
