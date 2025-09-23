@@ -1,0 +1,35 @@
+{
+  "google": {
+    "interview_process": [
+      "phone_screen",
+      "technical",
+      "system_design",
+      "behavioral"
+    ],
+    "focus_areas": [
+      "algorithms",
+      "system_design",
+      "googleyness"
+    ],
+    "preparation_tips": [
+      "Practice LeetCode",
+      "Study Google's products"
+    ]
+  },
+  "microsoft": {
+    "interview_process": [
+      "phone_screen",
+      "technical",
+      "behavioral"
+    ],
+    "focus_areas": [
+      "algorithms",
+      "design_patterns",
+      "collaboration"
+    ],
+    "preparation_tips": [
+      "Practice coding",
+      "Understand Microsoft's culture"
+    ]
+  }
+}

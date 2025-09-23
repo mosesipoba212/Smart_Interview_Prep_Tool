@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Interview - Smart Interview Prep</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #f5f5f7;
+            line-height: 1.4;
+            padding: 48px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .title {
+            font-size: 48px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #f5f5f7 0%, #86868b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 21px;
+            color: #86868b;
+            margin-bottom: 32px;
+        }
+        
+        .back-link {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #f5f5f7;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            backdrop-filter: blur(20px);
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .main-content {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 32px !important;
+            margin-bottom: 48px !important;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-radius: 18px !important;
+            padding: 32px !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            transition: transform 0.3s ease, background 0.3s ease !important;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .card h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #0071e3;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #f5f5f7;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #f5f5f7;
+            font-size: 16px;
+            transition: border-color 0.3s ease, background 0.3s ease;
+        }
+        
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #0071e3;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .form-group input::placeholder {
+            color: #86868b;
+        }
+        
+        .btn {
+            background: #0071e3 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 16px 32px !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            min-width: 200px !important;
+            justify-content: center !important;
+        }
+        
+        .btn:hover:not(:disabled) {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 113, 227, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #333;
+            color: #86868b;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #f5f5f7;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #0071e3;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .interview-session {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 32px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .interview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding: 16px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+        
+        .question-display {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 32px;
+            margin: 24px 0;
+            font-size: 18px;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .voice-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .voice-button {
+            background: #0071e3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+        
+        .voice-button:hover:not(:disabled) {
+            background: #0056b3;
+        }
+        
+        .voice-button:disabled {
+            background: #333;
+            color: #86868b;
+            cursor: not-allowed;
+        }
+        
+        .answer-section {
+            margin: 32px 0;
+        }
+        
+        .answer-section textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #f5f5f7;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .answer-section textarea:focus {
+            outline: none;
+            border-color: #0071e3;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .answer-section textarea::placeholder {
+            color: #86868b;
+        }
+        
+        .timer {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0071e3;
+        }
+        
+        .question-counter {
+            font-size: 16px;
+            color: #86868b;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .title {
+                font-size: 32px;
+            }
+            
+            .interview-header {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+            
+            .voice-controls {
+                justify-content: center;
+            }
+        }
+        .back-link {
+            color: #007AFF;
+            text-decoration: none;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .interview-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #333;
+            border-radius: 5px;
+        }
+        #question {
+            background: #222;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 1.1em;
+        }
+        .voice-controls {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .voice-button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            width: auto;
+        }
+        .voice-button:hover {
+            background: #0056b3;
+        }
+        .voice-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .voice-settings {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .voice-settings label {
+            margin: 0;
+            font-size: 14px;
+        }
+        .voice-settings select {
+            width: auto;
+            min-width: 120px;
+            padding: 5px;
+            font-size: 14px;
+        }
+        .audio-indicator {
+            color: #FF6B6B;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .voice-status {
+            font-size: 14px;
+            color: #888;
+        }
+        #answer {
+            min-height: 150px;
+            margin: 20px 0;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .score {
+            font-size: 2em;
+            text-align: center;
+            color: #007AFF;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Back to Dashboard</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🎭 Mock Interview Simulator - FIXED v2 ✨</h1>
+            <p class="subtitle">Practice with AI-powered interview simulations and voice-over</p>
+        </div>
+
+        <!-- Configuration Section -->
+        <div id="configuration" class="main-content">
+            <div class="card">
+                <h3>🎯 Configure Your Interview</h3>
+                
+                <div class="form-group">
+                    <label for="interviewType">Interview Type:</label>
+                    <select id="interviewType">
+                        <option value="">Select interview type...</option>
+                        {% for key, interview_type in interview_types.items() %}
+                        <option value="{{ key }}">{{ interview_type.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="difficulty">Difficulty Level:</label>
+                    <select id="difficulty">
+                        <option value="">Select difficulty...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="company">Company (Optional):</label>
+                    <input type="text" id="company" placeholder="e.g., Google, Microsoft, Meta">
+                </div>
+                
+                <div class="form-group">
+                    <label for="role">Role (Optional):</label>
+                    <input type="text" id="role" placeholder="e.g., Software Engineer, Product Manager">
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="autoPlayVoice" checked>
+                    <label for="autoPlayVoice">🎤 Auto-play questions with AI voice</label>
+                </div>
+                
+                <button id="startBtn" onclick="startInterview()" disabled class="btn">
+                    🚀 Start Interview
+                </button>
+            </div>
+            
+            <div class="card">
+                <h3>🎛️ Voice Settings</h3>
+                
+                <div class="form-group">
+                    <label for="voiceEngine">Voice Engine:</label>
+                    <select id="voiceEngine" onchange="updateVoiceEngine()">
+                        <option value="browser">Browser TTS</option>
+                        <option value="openai">OpenAI TTS (Premium)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="voiceSelect">Voice:</label>
+                    <select id="voiceSelect" onchange="updateVoiceSettings()">
+                        <option value="">Loading voices...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="speechRate">Speech Rate:</label>
+                    <select id="speechRate" onchange="updateVoiceSettings()">
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="speechPitch">Voice Pitch:</label>
+                    <select id="speechPitch" onchange="updateVoiceSettings()">
+                        <option value="0.5">Low</option>
+                        <option value="1" selected>Normal</option>
+                        <option value="1.5">High</option>
+                        <option value="2">Very High</option>
+                    </select>
+                </div>
+                
+                <button onclick="testVoice()" class="btn btn-secondary">
+                    🔊 Test Voice
+                </button>
+            </div>
+        </div>
+        
+        <!-- Interview Session -->
+        <div id="interview" class="hidden">
+            <div class="interview-session">
+                <div class="interview-header">
+                    <span id="counter" class="question-counter">Question 1 of 5</span>
+                    <span id="timer" class="timer">⏱️ 00:00</span>
+                </div>
+                
+                <div id="question" class="question-display">Loading question...</div>
+                
+                <div class="voice-controls" id="voiceControls">
+                    <button class="voice-button" id="playBtn" onclick="playQuestion()">🔊 Play Question</button>
+                    <button class="voice-button" id="pauseBtn" onclick="pauseAudio()">⏸️ Pause</button>
+                    <button class="voice-button" id="stopBtn" onclick="stopAudio()">⏹️ Stop</button>
+                    <span style="color: #86868b; margin-left: 16px;">Voice controls</span>
+                </div>
+                
+                <div class="answer-section">
+                    <label for="answer" style="display: block; margin-bottom: 12px; font-size: 18px; font-weight: 600;">Your Answer:</label>
+                    <textarea id="answer" placeholder="Type your answer here... Take your time to think through the problem and explain your reasoning clearly."></textarea>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px;">
+                    <button onclick="previousQuestion()" id="prevBtn" class="btn btn-secondary" disabled>
+                        ← Previous
+                    </button>
+                    
+                    <div style="display: flex; gap: 16px;">
+                        <button onclick="skipQuestion()" class="btn btn-secondary">
+                            Skip Question
+                        </button>
+                        <button onclick="nextQuestion()" id="nextBtn" class="btn">
+                            Next Question →
+                        </button>
+                        <button onclick="finishInterview()" id="finishBtn" class="btn hidden">
+                            🏁 Finish Interview
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+                    <button class="voice-button" id="stopBtn" onclick="stopVoice()">⏹️ Stop</button>
+                    <span class="audio-indicator" id="audioIndicator" style="display: none;">🎵 Playing...</span>
+                </div>
+                
+                <div class="voice-settings">
+                    <label for="voiceEngine">Engine:</label>
+                    <select id="voiceEngine" onchange="updateVoiceEngine()">
+                        <option value="browser">Browser TTS</option>
+                        <option value="openai">OpenAI TTS (Premium)</option>
+                    </select>
+                    
+                    <label for="voiceSelect">Voice:</label>
+                    <select id="voiceSelect" onchange="updateVoiceSettings()">
+                        <option value="">Loading voices...</option>
+                    </select>
+                    
+                    <label for="speedRange">Speed:</label>
+                    <select id="speedRange" onchange="updateVoiceSettings()">
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                    </select>
+                    
+                    <label for="pitchRange">Pitch:</label>
+                    <select id="pitchRange" onchange="updateVoiceSettings()">
+                        <option value="0.5">Low</option>
+                        <option value="1" selected>Normal</option>
+                        <option value="1.5">High</option>
+                        <option value="2">Very High</option>
+                    </select>
+                </div>
+                
+                <div class="voice-status" id="voiceStatus">
+                    AI voice ready - Click play to hear the question
+                </div>
+            </div>
+            
+            <textarea id="answer" placeholder="Type your answer here... Be specific and use examples when possible."></textarea>
+            
+            <div class="button-group">
+                <button id="submitBtn" onclick="submitAnswer()">➡️ Next Question</button>
+                <button id="finishBtn" onclick="finishInterview()" style="display: none;">🏁 Finish Interview</button>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="results" class="hidden">
+            <h2>🎯 Interview Results</h2>
+            
+            <div class="score" id="overallScore">Score: --/10</div>
+            
+            <div id="detailedResults"></div>
+            
+            <button onclick="startNewInterview()">Start New Interview</button>
+        </div>
+    </div>
+    
+    <script>
+        // Interview types from backend
+        const interviewTypes = {{ interview_types | tojson }};
+        
+        let currentSession = null;
+        let currentQuestion = 0;
+        let timerInterval = null;
+        
+        // Voice functionality
+        let speechSynthesis = window.speechSynthesis;
+        let currentUtterance = null;
+        let availableVoices = [];
+        let currentAudio = null;
+        let voiceSettings = {
+            rate: 1,
+            pitch: 1,
+            voice: null,
+            engine: 'browser'
+        };
+        
+        // OpenAI voice options
+        const openaiVoices = [
+            { id: 'alloy', name: 'Alloy (Neutral)' },
+            { id: 'echo', name: 'Echo (Male)' },
+            { id: 'fable', name: 'Fable (British Male)' },
+            { id: 'onyx', name: 'Onyx (Deep Male)' },
+            { id: 'nova', name: 'Nova (Young Female)' },
+            { id: 'shimmer', name: 'Shimmer (Soft Female)' }
+        ];
+        
+        // Initialize voices when page loads
+        function initializeVoices() {
+            availableVoices = speechSynthesis.getVoices();
+            populateVoiceSelect();
+            
+            // Some browsers load voices asynchronously
+            if (availableVoices.length === 0) {
+                speechSynthesis.onvoiceschanged = function() {
+                    availableVoices = speechSynthesis.getVoices();
+                    populateVoiceSelect();
+                };
+            }
+        }
+        
+        function populateVoiceSelect() {
+            const voiceSelect = document.getElementById('voiceSelect');
+            const engine = document.getElementById('voiceEngine').value;
+            
+            if (engine === 'openai') {
+                voiceSelect.innerHTML = '';
+                openaiVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.id;
+                    option.textContent = voice.name;
+                    voiceSelect.appendChild(option);
+                });
+                voiceSelect.value = 'alloy'; // Default
+            } else {
+                voiceSelect.innerHTML = '';
+                
+                if (availableVoices.length === 0) {
+                    voiceSelect.innerHTML = '<option value="">No voices available</option>';
+                    return;
+                }
+                
+                // Add default option
+                voiceSelect.innerHTML = '<option value="">System Default</option>';
+                
+                // Filter for English voices first
+                const englishVoices = availableVoices.filter(voice => 
+                    voice.lang.startsWith('en')
+                );
+                
+                if (englishVoices.length > 0) {
+                    englishVoices.forEach((voice, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = `${voice.name} (${voice.lang})`;
+                        voiceSelect.appendChild(option);
+                    });
+                } else {
+                    // If no English voices, add all voices
+                    availableVoices.forEach((voice, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = `${voice.name} (${voice.lang})`;
+                        voiceSelect.appendChild(option);
+                    });
+                }
+            }
+        }
+        
+        function updateVoiceEngine() {
+            populateVoiceSelect();
+            updateVoiceSettings();
+        }
+        
+        function updateVoiceSettings() {
+            const voiceSelect = document.getElementById('voiceSelect');
+            const speedRange = document.getElementById('speedRange');
+            const pitchRange = document.getElementById('pitchRange');
+            const engine = document.getElementById('voiceEngine').value;
+            
+            voiceSettings.rate = parseFloat(speedRange.value);
+            voiceSettings.pitch = parseFloat(pitchRange.value);
+            voiceSettings.engine = engine;
+            
+            if (engine === 'openai') {
+                voiceSettings.voice = voiceSelect.value || 'alloy';
+            } else {
+                if (voiceSelect.value && voiceSelect.value !== '') {
+                    const englishVoices = availableVoices.filter(voice => voice.lang.startsWith('en'));
+                    const voiceArray = englishVoices.length > 0 ? englishVoices : availableVoices;
+                    voiceSettings.voice = voiceArray[parseInt(voiceSelect.value)];
+                } else {
+                    voiceSettings.voice = null;
+                }
+            }
+            
+            // Update status
+            const status = document.getElementById('voiceStatus');
+            if (engine === 'openai') {
+                const voiceName = openaiVoices.find(v => v.id === voiceSettings.voice)?.name || 'Alloy';
+                status.textContent = `OpenAI Voice: ${voiceName} | Speed: ${voiceSettings.rate}x`;
+            } else {
+                const voiceName = voiceSettings.voice ? voiceSettings.voice.name : 'System Default';
+                status.textContent = `Voice: ${voiceName} | Speed: ${voiceSettings.rate}x | Pitch: ${voiceSettings.pitch}`;
+            }
+        }
+        
+        function playQuestion() {
+            const questionText = document.getElementById('question').textContent;
+            if (!questionText || questionText === 'Loading question...') {
+                alert('No question to play');
+                return;
+            }
+            
+            // Stop any current speech
+            stopVoice();
+            
+            if (voiceSettings.engine === 'openai') {
+                playWithOpenAI(questionText);
+            } else {
+                playWithBrowserTTS(questionText);
+            }
+        }
+        
+        async function playWithOpenAI(text) {
+            try {
+                // Show loading state
+                document.getElementById('playBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('audioIndicator').style.display = 'inline';
+                document.getElementById('audioIndicator').textContent = '🔄 Generating...';
+                document.getElementById('voiceStatus').textContent = 'Generating AI voice...';
+                
+                const response = await fetch('/mock-interview/text-to-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: voiceSettings.voice || 'alloy'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Create audio from base64 data
+                    const audioBlob = base64ToBlob(data.audio_data, 'audio/mpeg');
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    currentAudio = new Audio(audioUrl);
+                    currentAudio.playbackRate = voiceSettings.rate;
+                    
+                    currentAudio.onplay = function() {
+                        document.getElementById('playBtn').style.display = 'none';
+                        document.getElementById('pauseBtn').style.display = 'inline-block';
+                        document.getElementById('audioIndicator').textContent = '🎵 Playing...';
+                        document.getElementById('voiceStatus').textContent = 'Playing OpenAI voice...';
+                    };
+                    
+                    currentAudio.onended = function() {
+                        document.getElementById('playBtn').style.display = 'inline-block';
+                        document.getElementById('pauseBtn').style.display = 'none';
+                        document.getElementById('audioIndicator').style.display = 'none';
+                        updateVoiceSettings();
+                        URL.revokeObjectURL(audioUrl);
+                    };
+                    
+                    currentAudio.onerror = function() {
+                        document.getElementById('playBtn').style.display = 'inline-block';
+                        document.getElementById('pauseBtn').style.display = 'none';
+                        document.getElementById('audioIndicator').style.display = 'none';
+                        document.getElementById('voiceStatus').textContent = 'Error playing audio';
+                    };
+                    
+                    currentAudio.play();
+                } else {
+                    throw new Error(data.error || 'Failed to generate speech');
+                }
+                
+            } catch (error) {
+                console.error('OpenAI TTS error:', error);
+                document.getElementById('playBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('audioIndicator').style.display = 'none';
+                document.getElementById('voiceStatus').textContent = 'Error: Falling back to browser TTS';
+                
+                // Fallback to browser TTS
+                setTimeout(() => playWithBrowserTTS(text), 1000);
+            }
+        }
+        
+        function playWithBrowserTTS(text) {
+            // Create new utterance
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            currentUtterance.rate = voiceSettings.rate;
+            currentUtterance.pitch = voiceSettings.pitch;
+            
+            if (voiceSettings.voice) {
+                currentUtterance.voice = voiceSettings.voice;
+            }
+            
+            // Set up event handlers
+            currentUtterance.onstart = function() {
+                document.getElementById('playBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                document.getElementById('audioIndicator').style.display = 'inline';
+                document.getElementById('audioIndicator').textContent = '🎵 Playing...';
+                document.getElementById('voiceStatus').textContent = 'Playing question...';
+            };
+            
+            currentUtterance.onend = function() {
+                document.getElementById('playBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('audioIndicator').style.display = 'none';
+                updateVoiceSettings();
+            };
+            
+            currentUtterance.onerror = function(event) {
+                console.error('Speech synthesis error:', event);
+                document.getElementById('playBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('audioIndicator').style.display = 'none';
+                document.getElementById('voiceStatus').textContent = 'Error playing voice. Please try again.';
+            };
+            
+            // Start speaking
+            speechSynthesis.speak(currentUtterance);
+        }
+        
+        function base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], {type: mimeType});
+        }
+        
+        function pauseVoice() {
+            if (voiceSettings.engine === 'openai' && currentAudio) {
+                if (!currentAudio.paused) {
+                    currentAudio.pause();
+                    document.getElementById('pauseBtn').textContent = '▶️ Resume';
+                    document.getElementById('voiceStatus').textContent = 'Audio paused';
+                } else {
+                    currentAudio.play();
+                    document.getElementById('pauseBtn').textContent = '⏸️ Pause';
+                    document.getElementById('voiceStatus').textContent = 'Playing OpenAI voice...';
+                }
+            } else {
+                if (speechSynthesis.speaking && !speechSynthesis.paused) {
+                    speechSynthesis.pause();
+                    document.getElementById('pauseBtn').textContent = '▶️ Resume';
+                    document.getElementById('voiceStatus').textContent = 'Voice paused';
+                } else if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                    document.getElementById('pauseBtn').textContent = '⏸️ Pause';
+                    document.getElementById('voiceStatus').textContent = 'Playing question...';
+                }
+            }
+        }
+        
+        function stopVoice() {
+            // Stop browser TTS
+            speechSynthesis.cancel();
+            
+            // Stop OpenAI audio
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+            }
+            
+            // Reset UI
+            document.getElementById('playBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('pauseBtn').textContent = '⏸️ Pause';
+            document.getElementById('audioIndicator').style.display = 'none';
+            updateVoiceSettings();
+        }
+        
+        // Initialize form
+        document.getElementById('interviewType').addEventListener('change', function() {
+            const selectedType = this.value;
+            const difficultySelect = document.getElementById('difficulty');
+            
+            difficultySelect.innerHTML = '<option value="">Select difficulty...</option>';
+            
+            if (selectedType && interviewTypes[selectedType]) {
+                const difficulties = interviewTypes[selectedType].difficulty_levels;
+                difficulties.forEach(diff => {
+                    const option = document.createElement('option');
+                    option.value = diff;
+                    option.textContent = diff;
+                    difficultySelect.appendChild(option);
+                });
+            }
+            
+            updateStartButton();
+        });
+        
+        document.getElementById('difficulty').addEventListener('change', updateStartButton);
+        
+        function updateStartButton() {
+            const typeSelected = document.getElementById('interviewType').value;
+            const diffSelected = document.getElementById('difficulty').value;
+            document.getElementById('startBtn').disabled = !typeSelected || !diffSelected;
+        }
+        
+        // Start interview
+        async function startInterview() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = 'Starting...';
+            startBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/mock-interview/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        interview_type: document.getElementById('interviewType').value,
+                        difficulty: document.getElementById('difficulty').value,
+                        company: document.getElementById('company').value,
+                        role: document.getElementById('role').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentSession = data.session;
+                    currentQuestion = 0;
+                    
+                    showSection('interview');
+                    showQuestion();
+                    startTimer();
+                } else {
+                    alert('Error starting interview: ' + data.error);
+                    startBtn.textContent = '🚀 Start Interview';
+                    startBtn.disabled = false;
+                }
+            } catch (error) {
+                alert('Failed to start interview. Please try again.');
+                startBtn.textContent = '🚀 Start Interview';
+                startBtn.disabled = false;
+            }
+        }
+        
+        function showSection(sectionId) {
+            document.getElementById('setup').className = 'hidden';
+            document.getElementById('interview').className = 'hidden';
+            document.getElementById('results').className = 'hidden';
+            document.getElementById(sectionId).className = '';
+        }
+        
+        function showQuestion() {
+            if (currentQuestion >= currentSession.questions.length) {
+                finishInterview();
+                return;
+            }
+            
+            const question = currentSession.questions[currentQuestion];
+            const total = currentSession.questions.length;
+            
+            document.getElementById('counter').textContent = `Question ${currentQuestion + 1} of ${total}`;
+            document.getElementById('question').textContent = question;
+            document.getElementById('answer').value = '';
+            
+            // Show finish button on last question
+            if (currentQuestion === total - 1) {
+                document.getElementById('submitBtn').style.display = 'none';
+                document.getElementById('finishBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('submitBtn').style.display = 'inline-block';
+                document.getElementById('finishBtn').style.display = 'none';
+            }
+            
+            // Auto-play the question if enabled
+            const autoPlay = document.getElementById('autoPlayVoice')?.checked;
+            if (autoPlay) {
+                setTimeout(() => {
+                    playQuestion();
+                }, 500);
+            }
+        }
+        
+        function startTimer() {
+            let seconds = 0;
+            timerInterval = setInterval(() => {
+                seconds++;
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                document.getElementById('timer').textContent = 
+                    `⏱️ ${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+        
+        async function submitAnswer() {
+            const answer = document.getElementById('answer').value.trim();
+            if (!answer) {
+                alert('Please provide an answer before submitting.');
+                return;
+            }
+            
+            await processAnswer(answer);
+            currentQuestion++;
+            showQuestion();
+        }
+        
+        async function finishInterview() {
+            const answer = document.getElementById('answer').value.trim();
+            if (answer) {
+                await processAnswer(answer);
+            }
+            
+            stopTimer();
+            await generateReport();
+            showSection('results');
+        }
+        
+        async function processAnswer(answer) {
+            try {
+                const response = await fetch('/mock-interview/submit-answer', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: currentSession.id,
+                        question_index: currentQuestion,
+                        answer: answer
+                    })
+                });
+                
+                const data = await response.json();
+                if (!data.success) {
+                    console.error('Error submitting answer:', data.error);
+                }
+            } catch (error) {
+                console.error('Failed to submit answer:', error);
+            }
+        }
+        
+        async function generateReport() {
+            try {
+                const response = await fetch('/mock-interview/report', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: currentSession.id
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data.report);
+                } else {
+                    document.getElementById('detailedResults').innerHTML = 
+                        '<p>Error generating report. Please try again.</p>';
+                }
+            } catch (error) {
+                document.getElementById('detailedResults').innerHTML = 
+                    '<p>Failed to generate report. Please check your connection.</p>';
+            }
+        }
+        
+        function displayResults(report) {
+            document.getElementById('overallScore').textContent = `Score: ${report.overall_score}/10`;
+            
+            let resultsHTML = '<h3>📊 Detailed Feedback</h3>';
+            
+            report.question_scores.forEach((score, index) => {
+                const question = currentSession.questions[index];
+                const answer = currentSession.answers ? currentSession.answers[index] : 'No answer provided';
+                
+                resultsHTML += `
+                    <div style="background: #333; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                        <h4>Question ${index + 1}: ${score.score}/10</h4>
+                        <p><strong>Q:</strong> ${question}</p>
+                        <p><strong>A:</strong> ${answer}</p>
+                        <p><strong>Feedback:</strong> ${score.feedback}</p>
+                    </div>
+                `;
+            });
+            
+            resultsHTML += `
+                <div style="background: #222; padding: 15px; margin: 20px 0; border-radius: 5px;">
+                    <h3>📈 Areas for Improvement</h3>
+                    <ul>
+                        ${report.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            document.getElementById('detailedResults').innerHTML = resultsHTML;
+        }
+        
+        function startNewInterview() {
+            currentSession = null;
+            currentQuestion = 0;
+            stopTimer();
+            showSection('setup');
+            
+            // Reset form
+            document.getElementById('interviewType').value = '';
+            document.getElementById('difficulty').innerHTML = '<option value="">Select difficulty...</option>';
+            document.getElementById('company').value = '';
+            document.getElementById('role').value = '';
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('startBtn').textContent = '🚀 Start Interview';
+        }
+        
+        // Initialize voices and page when loaded
+        window.addEventListener('load', function() {
+            initializeVoices();
+            updateVoiceEngine();
+            updateVoiceSettings();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Interview - Smart Interview Prep</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #f5f5f7;
+            line-height: 1.4;
+            padding: 48px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .title {
+            font-size: 48px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #f5f5f7 0%, #86868b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 21px;
+            color: #86868b;
+            margin-bottom: 32px;
+        }
+        
+        .back-link {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #f5f5f7;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            backdrop-filter: blur(20px);
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 32px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .card h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #0071e3;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #f5f5f7;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #f5f5f7;
+            font-size: 16px;
+            transition: border-color 0.3s ease, background 0.3s ease;
+        }
+        
+        .form-group select option {
+            background: #1d1d1f;
+            color: #f5f5f7;
+            padding: 12px;
+        }
+        
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #0071e3;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .form-group input::placeholder {
+            color: #86868b;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #0071e3;
+        }
+        
+        .btn {
+            background: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 200px;
+            justify-content: center;
+        }
+        
+        .btn:hover:not(:disabled) {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 113, 227, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #333;
+            color: #86868b;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #f5f5f7;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .interview-progress {
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0071e3, #0056b3);
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            color: #86868b;
+            font-size: 14px;
+        }
+        
+        .question-display {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            font-size: 18px;
+            line-height: 1.6;
+            border-left: 4px solid #0071e3;
+        }
+        
+        .question-actions,
+        .answer-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .title {
+                font-size: 32px;
+            }
+            
+            .question-actions,
+            .answer-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Back to Dashboard</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🎭 Mock Interview Simulator</h1>
+            <p class="subtitle">Practice with AI-powered interview simulations and voice-over</p>
+        </div>
+
+        <!-- Configuration Section -->
+        <div id="configuration" class="main-content">
+            <div class="card">
+                <h3>🎯 Configure Your Interview</h3>
+                
+                <div class="form-group">
+                    <label for="interviewType">Interview Type:</label>
+                    <select id="interviewType">
+                        <option value="">Select interview type...</option>
+                        <option value="technical">Technical Interview</option>
+                        <option value="behavioral">Behavioral Interview</option>
+                        <option value="system_design">System Design Interview</option>
+                        <option value="product">Product Management Interview</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="difficulty">Difficulty Level:</label>
+                    <select id="difficulty">
+                        <option value="">Select difficulty...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="company">Company (Optional):</label>
+                    <input type="text" id="company" placeholder="e.g., Google, Microsoft, Meta">
+                </div>
+                
+                <div class="form-group">
+                    <label for="role">Role (Optional):</label>
+                    <input type="text" id="role" placeholder="e.g., Software Engineer, Product Manager">
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="autoPlayVoice" checked>
+                    <label for="autoPlayVoice">🎤 Auto-play questions with AI voice</label>
+                </div>
+                
+                <button id="startBtn" onclick="startInterview()" disabled class="btn">
+                    🚀 Start Interview
+                </button>
+            </div>
+            
+            <div class="card">
+                <h3>🎛️ Voice Settings</h3>
+                
+                <div class="form-group">
+                    <label for="ttsEngine">Voice Engine:</label>
+                    <select id="ttsEngine">
+                        <option value="browser">Browser TTS</option>
+                        <option value="openai">OpenAI TTS (Premium)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="voiceSelect">Voice:</label>
+                    <select id="voiceSelect">
+                        <option value="">Loading voices...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="speechRate">Speech Rate:</label>
+                    <select id="speechRate">
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="speechPitch">Voice Pitch:</label>
+                    <select id="speechPitch">
+                        <option value="0.5">Low</option>
+                        <option value="1" selected>Normal</option>
+                        <option value="1.5">High</option>
+                        <option value="2">Very High</option>
+                    </select>
+                </div>
+                
+                <button onclick="testVoice()" class="btn btn-secondary">
+                    🔊 Test Voice
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const interviewTypes = {
+                'technical': {
+                    'name': 'Technical Interview',
+                    'difficulty_levels': ['Beginner', 'Intermediate', 'Advanced', 'Expert']
+                },
+                'behavioral': {
+                    'name': 'Behavioral Interview',
+                    'difficulty_levels': ['Basic', 'Intermediate', 'Advanced']
+                },
+                'system_design': {
+                    'name': 'System Design Interview',
+                    'difficulty_levels': ['Junior', 'Mid-level', 'Senior', 'Principal']
+                },
+                'product': {
+                    'name': 'Product Management Interview',
+                    'difficulty_levels': ['Associate', 'Product Manager', 'Senior PM', 'Director']
+                }
+            };
+
+            const interviewTypeSelect = document.getElementById('interviewType');
+            const difficultySelect = document.getElementById('difficulty');
+            const voiceSelect = document.getElementById('voiceSelect');
+            
+            if (!interviewTypeSelect || !difficultySelect) {
+                console.error('Required elements not found!');
+                return;
+            }
+
+            // Load available voices
+            function loadVoices() {
+                const voices = speechSynthesis.getVoices();
+                voiceSelect.innerHTML = '<option value="">Select voice...</option>';
+                
+                voices.forEach((voice, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    option.style.background = '#1d1d1f';
+                    option.style.color = '#f5f5f7';
+                    voiceSelect.appendChild(option);
+                });
+                
+                if (voices.length > 0) {
+                    console.log(`Loaded ${voices.length} voices`);
+                } else {
+                    console.log('No voices available, will retry...');
+                    setTimeout(loadVoices, 100);
+                }
+            }
+
+            // Load voices when they become available
+            speechSynthesis.addEventListener('voiceschanged', loadVoices);
+            loadVoices(); // Try loading immediately
+
+            interviewTypeSelect.addEventListener('change', function() {
+                const selectedType = this.value;
+                
+                console.log('Selected interview type:', selectedType);
+                difficultySelect.innerHTML = '<option value="">Select difficulty...</option>';
+                
+                if (selectedType && interviewTypes[selectedType]) {
+                    const difficulties = interviewTypes[selectedType].difficulty_levels;
+                    console.log('Available difficulties:', difficulties);
+                    difficulties.forEach(diff => {
+                        const option = document.createElement('option');
+                        option.value = diff;
+                        option.textContent = diff;
+                        option.style.background = '#1d1d1f';
+                        option.style.color = '#f5f5f7';
+                        difficultySelect.appendChild(option);
+                    });
+                    console.log('Difficulty options added successfully');
+                } else {
+                    console.log('No interview type selected or not found');
+                }
+                
+                updateStartButton();
+            });
+            
+            difficultySelect.addEventListener('change', updateStartButton);
+            
+            function updateStartButton() {
+                const typeSelected = interviewTypeSelect.value;
+                const diffSelected = difficultySelect.value;
+                const shouldEnable = typeSelected && diffSelected;
+                document.getElementById('startBtn').disabled = !shouldEnable;
+                console.log('Button state updated. Type:', typeSelected, 'Difficulty:', diffSelected, 'Enabled:', shouldEnable);
+            }
+
+            // Global functions
+            window.startInterview = async function() {
+                const type = interviewTypeSelect.value;
+                const difficulty = difficultySelect.value;
+                const company = document.getElementById('company').value;
+                const role = document.getElementById('role').value;
+                const autoPlay = document.getElementById('autoPlayVoice').checked;
+                
+                console.log('Starting interview:', {type, difficulty, company, role, autoPlay});
+                
+                // Show loading state
+                const startBtn = document.getElementById('startBtn');
+                const originalText = startBtn.textContent;
+                startBtn.disabled = true;
+                startBtn.textContent = '🔄 Starting...';
+                
+                try {
+                    const response = await fetch('/mock-interview/start', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            interview_type: type,
+                            difficulty: difficulty,
+                            company: company || 'General',
+                            role: role || 'General'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.session) {
+                        showInterviewSession(data.session, autoPlay);
+                    } else {
+                        alert('❌ Failed to start interview: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error starting interview:', error);
+                    alert('❌ Network error: Could not start interview. Please try again.');
+                } finally {
+                    startBtn.disabled = false;
+                    startBtn.textContent = originalText;
+                }
+            };
+            
+            window.testVoice = function() {
+                const voices = speechSynthesis.getVoices();
+                const selectedVoiceIndex = voiceSelect.value;
+                const speechRate = document.getElementById('speechRate').value;
+                const speechPitch = document.getElementById('speechPitch').value;
+                
+                if (!selectedVoiceIndex) {
+                    alert('Please select a voice first!');
+                    return;
+                }
+                
+                const utterance = new SpeechSynthesisUtterance('Hello! This is a test of your selected voice settings. Good luck with your interview preparation!');
+                utterance.voice = voices[selectedVoiceIndex];
+                utterance.rate = parseFloat(speechRate);
+                utterance.pitch = parseFloat(speechPitch);
+                
+                speechSynthesis.speak(utterance);
+                console.log('Testing voice:', voices[selectedVoiceIndex].name);
+            };
+
+            // Interview session display
+            window.showInterviewSession = function(session, autoPlay) {
+                // Hide configuration section
+                document.getElementById('configuration').style.display = 'none';
+                
+                // Create interview session UI
+                const container = document.querySelector('.container');
+                const sessionHTML = `
+                    <div id="interview-session" class="main-content">
+                        <div class="card" style="grid-column: 1 / -1;">
+                            <h3>🎯 ${session.interview_type} Interview - ${session.difficulty}</h3>
+                            <p><strong>Company:</strong> ${session.company} | <strong>Role:</strong> ${session.role}</p>
+                            <div class="interview-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%"></div>
+                                </div>
+                                <span class="progress-text">Question 1 of ${session.questions.length}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 id="question-title">📝 Question 1</h3>
+                            <div id="question-text" class="question-display">
+                                ${session.questions[0].question}
+                            </div>
+                            <div class="question-actions">
+                                <button class="btn btn-secondary" onclick="speakQuestion()">🔊 Repeat Question</button>
+                                <button class="btn" onclick="nextQuestion()">Next Question ➡️</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>🎤 Your Answer</h3>
+                            <textarea id="answer-input" placeholder="Type your answer here..." style="width: 100%; min-height: 150px; padding: 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #f5f5f7; font-size: 16px; resize: vertical;"></textarea>
+                            <div class="answer-actions" style="margin-top: 16px;">
+                                <button class="btn btn-secondary" onclick="endInterview()">🏁 End Interview</button>
+                                <button class="btn" onclick="submitAnswer()">Submit Answer ✅</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML = `
+                    <div class="header">
+                        <h1 class="title">🎭 Interview in Progress</h1>
+                        <p class="subtitle">Answer thoughtfully and take your time</p>
+                    </div>
+                    ${sessionHTML}
+                `;
+                
+                // Store session data globally
+                window.currentSession = session;
+                window.currentQuestionIndex = 0;
+                window.autoPlayEnabled = autoPlay;
+                
+                // Auto-play first question if enabled
+                if (autoPlay) {
+                    setTimeout(() => speakQuestion(), 1000);
+                }
+                
+                console.log('Interview session started:', session);
+            };
+
+            // Interview session functions
+            window.speakQuestion = function() {
+                const question = window.currentSession.questions[window.currentQuestionIndex].question;
+                const voices = speechSynthesis.getVoices();
+                const selectedVoiceIndex = voiceSelect.value;
+                const speechRate = document.getElementById('speechRate').value;
+                const speechPitch = document.getElementById('speechPitch').value;
+                
+                const utterance = new SpeechSynthesisUtterance(question);
+                if (selectedVoiceIndex && voices[selectedVoiceIndex]) {
+                    utterance.voice = voices[selectedVoiceIndex];
+                }
+                utterance.rate = parseFloat(speechRate);
+                utterance.pitch = parseFloat(speechPitch);
+                
+                speechSynthesis.speak(utterance);
+            };
+
+            window.nextQuestion = function() {
+                if (window.currentQuestionIndex < window.currentSession.questions.length - 1) {
+                    window.currentQuestionIndex++;
+                    const question = window.currentSession.questions[window.currentQuestionIndex];
+                    
+                    document.getElementById('question-title').textContent = `📝 Question ${window.currentQuestionIndex + 1}`;
+                    document.getElementById('question-text').textContent = question.question;
+                    document.getElementById('answer-input').value = '';
+                    
+                    // Update progress
+                    const progress = ((window.currentQuestionIndex + 1) / window.currentSession.questions.length) * 100;
+                    document.querySelector('.progress-fill').style.width = progress + '%';
+                    document.querySelector('.progress-text').textContent = `Question ${window.currentQuestionIndex + 1} of ${window.currentSession.questions.length}`;
+                    
+                    // Auto-play if enabled
+                    if (window.autoPlayEnabled) {
+                        setTimeout(() => speakQuestion(), 500);
+                    }
+                } else {
+                    alert('🎉 Interview completed! All questions answered.');
+                    endInterview();
+                }
+            };
+
+            window.submitAnswer = function() {
+                const answer = document.getElementById('answer-input').value.trim();
+                if (!answer) {
+                    alert('Please provide an answer before submitting.');
+                    return;
+                }
+                
+                // Store answer (in a real app, this would be sent to backend)
+                const currentQuestion = window.currentSession.questions[window.currentQuestionIndex];
+                currentQuestion.answer = answer;
+                
+                alert('✅ Answer submitted! Moving to next question...');
+                nextQuestion();
+            };
+
+            window.endInterview = function() {
+                if (confirm('Are you sure you want to end the interview?')) {
+                    // Reload page to return to configuration
+                    location.reload();
+                }
+            };
+
+            console.log('Mock Interview page initialized successfully!');
+        });
+    </script>
+</body>
+</html>

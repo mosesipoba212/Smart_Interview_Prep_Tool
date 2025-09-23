@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Networking Tools - Smart Interview Prep</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #f5f5f7;
+            line-height: 1.4;
+            padding: 48px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .title {
+            font-size: 48px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #f5f5f7 0%, #86868b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 21px;
+            color: #86868b;
+        }
+        
+        .networking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+        
+        .networking-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+        
+        .networking-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #f5f5f7;
+        }
+        
+        .card-description {
+            font-size: 16px;
+            color: #a1a1a6;
+            margin-bottom: 16px;
+        }
+        
+        .card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            background: #0071e3;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            background: #0077ed;
+        }
+        
+        .action-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f5f5f7;
+        }
+        
+        .action-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .back-link {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #f5f5f7;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            backdrop-filter: blur(20px);
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .contact-form {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #f5f5f7;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #f5f5f7;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        
+        .form-input::placeholder {
+            color: #86868b;
+        }
+        
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Back to Dashboard</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Networking Tools</h1>
+            <p class="subtitle">Build professional connections and expand your network</p>
+        </div>
+        
+        <div class="networking-grid">
+            <div class="networking-card">
+                <h3 class="card-title">🌐 LinkedIn Optimization</h3>
+                <p class="card-description">Enhance your LinkedIn profile to attract recruiters and build connections</p>
+                <div class="card-actions">
+                    <button class="action-btn">Profile Review</button>
+                    <button class="action-btn secondary">Connection Templates</button>
+                </div>
+            </div>
+            
+            <div class="networking-card">
+                <h3 class="card-title">👥 Industry Events</h3>
+                <p class="card-description">Find and attend relevant industry events, meetups, and conferences</p>
+                <div class="card-actions">
+                    <button class="action-btn">Browse Events</button>
+                    <button class="action-btn secondary">Event Calendar</button>
+                </div>
+            </div>
+            
+            <div class="networking-card">
+                <h3 class="card-title">💼 Referral Network</h3>
+                <p class="card-description">Track your professional contacts and potential referral sources</p>
+                <div class="card-actions">
+                    <button class="action-btn">Add Contact</button>
+                    <button class="action-btn secondary">View Network</button>
+                </div>
+            </div>
+            
+            <div class="networking-card">
+                <h3 class="card-title">📧 Outreach Templates</h3>
+                <p class="card-description">Professional email templates for networking and follow-ups</p>
+                <div class="card-actions">
+                    <button class="action-btn">Cold Outreach</button>
+                    <button class="action-btn secondary">Follow-up</button>
+                </div>
+            </div>
+            
+            <div class="networking-card">
+                <h3 class="card-title">🎯 Target Companies</h3>
+                <p class="card-description">Research and track companies you're interested in joining</p>
+                <div class="card-actions">
+                    <button class="action-btn">Add Company</button>
+                    <button class="action-btn secondary">Research Tools</button>
+                </div>
+            </div>
+            
+            <div class="networking-card">
+                <h3 class="card-title">📱 Social Media Strategy</h3>
+                <p class="card-description">Build your professional brand across social platforms</p>
+                <div class="card-actions">
+                    <button class="action-btn">Brand Guide</button>
+                    <button class="action-btn secondary">Content Ideas</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="contact-form">
+            <h3 class="card-title">Add New Contact</h3>
+            <form id="contactForm">
+                <div class="form-group">
+                    <label class="form-label" for="contactName">Name</label>
+                    <input type="text" id="contactName" class="form-input" placeholder="Enter contact name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="contactEmail">Email</label>
+                    <input type="email" id="contactEmail" class="form-input" placeholder="Enter email address">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="contactCompany">Company</label>
+                    <input type="text" id="contactCompany" class="form-input" placeholder="Enter company name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="contactNotes">Notes</label>
+                    <textarea id="contactNotes" class="form-input form-textarea" placeholder="How you met, context, etc."></textarea>
+                </div>
+                <button type="submit" class="action-btn">Save Contact</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('contactName').value;
+            const email = document.getElementById('contactEmail').value;
+            const company = document.getElementById('contactCompany').value;
+            const notes = document.getElementById('contactNotes').value;
+            
+            if (name && email) {
+                // Here you would typically send the data to the backend
+                alert('Contact saved successfully!');
+                this.reset();
+            } else {
+                alert('Please fill in at least name and email.');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "technical": {
+    "description": "Technical interviews focusing on coding and algorithms",
+    "typical_duration": 60,
+    "preparation_focus": [
+      "algorithms",
+      "data_structures",
+      "system_design"
+    ]
+  },
+  "behavioral": {
+    "description": "Behavioral interviews focusing on soft skills",
+    "typical_duration": 45,
+    "preparation_focus": [
+      "STAR_method",
+      "company_research",
+      "career_stories"
+    ]
+  },
+  "system_design": {
+    "description": "System design interviews for senior positions",
+    "typical_duration": 90,
+    "preparation_focus": [
+      "architecture",
+      "scalability",
+      "trade_offs"
+    ]
+  }
+}

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Diagnostics - Smart Interview Prep</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #f5f5f7;
+            line-height: 1.4;
+            padding: 48px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .title {
+            font-size: 48px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #f5f5f7 0%, #86868b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 21px;
+            color: #86868b;
+        }
+        
+        .diagnostics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+        
+        .diagnostic-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #f5f5f7;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-healthy { background: #34c759; }
+        .status-warning { background: #ff9500; }
+        .status-error { background: #ff3b30; }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            color: #86868b;
+            font-size: 14px;
+        }
+        
+        .metric-value {
+            color: #f5f5f7;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .error-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        
+        .error-item {
+            padding: 8px;
+            border-left: 3px solid #ff3b30;
+            margin-bottom: 8px;
+            background: rgba(255, 59, 48, 0.1);
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .error-code {
+            color: #ff9500;
+            font-weight: 600;
+            font-family: monospace;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #0071e3;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0077ed;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f5f5f7;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .back-link {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #f5f5f7;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            backdrop-filter: blur(20px);
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .code-block {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'SF Mono', Consolas, 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            color: #a1a1a6;
+            margin-top: 12px;
+            overflow-x: auto;
+        }
+        
+        .refresh-indicator {
+            display: none;
+            color: #0071e3;
+            font-size: 14px;
+            margin-left: 12px;
+        }
+        
+        .loading {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Back to Dashboard</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="title">System Diagnostics</h1>
+            <p class="subtitle">Comprehensive system health and error monitoring</p>
+        </div>
+        
+        <div class="diagnostics-grid">
+            <div class="diagnostic-card">
+                <h3 class="card-title">
+                    <span class="status-indicator" id="systemStatus"></span>
+                    System Health
+                    <span class="refresh-indicator" id="refreshIndicator">⟳</span>
+                </h3>
+                <div id="systemHealth">
+                    <div class="metric-row">
+                        <span class="metric-label">Loading system health...</span>
+                        <span class="metric-value">⟳</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="diagnostic-card">
+                <h3 class="card-title">
+                    <span class="status-indicator status-healthy"></span>
+                    Service Status
+                </h3>
+                <div id="serviceStatus">
+                    <div class="metric-row">
+                        <span class="metric-label">Loading services...</span>
+                        <span class="metric-value">⟳</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="diagnostic-card">
+                <h3 class="card-title">
+                    <span class="status-indicator status-warning"></span>
+                    Error Statistics
+                </h3>
+                <div id="errorStats">
+                    <div class="metric-row">
+                        <span class="metric-label">Loading error data...</span>
+                        <span class="metric-value">⟳</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="diagnostic-card">
+                <h3 class="card-title">
+                    <span class="status-indicator status-error"></span>
+                    Recent Errors
+                </h3>
+                <div id="recentErrors">
+                    <div class="metric-row">
+                        <span class="metric-label">Loading recent errors...</span>
+                        <span class="metric-value">⟳</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="refreshDiagnostics()">Refresh Diagnostics</button>
+            <button class="btn btn-secondary" onclick="generateErrorReport()">Generate Error Report</button>
+            <button class="btn btn-secondary" onclick="testErrorHandling()">Test Error Handling</button>
+            <button class="btn btn-secondary" onclick="clearErrorHistory()">Clear Error History</button>
+        </div>
+    </div>
+    
+    <script>
+        let diagnosticsData = {};
+        
+        async function loadDiagnostics() {
+            try {
+                showRefreshIndicator(true);
+                
+                const response = await fetch('/system-diagnostics');
+                const data = await response.json();
+                
+                diagnosticsData = data;
+                updateSystemHealth(data.health);
+                updateServiceStatus(data.services_status);
+                updateErrorStats(data.diagnostics.error_statistics);
+                updateRecentErrors(data.diagnostics.recent_errors);
+                
+            } catch (error) {
+                console.error('Failed to load diagnostics:', error);
+                showError('Failed to load diagnostics data');
+            } finally {
+                showRefreshIndicator(false);
+            }
+        }
+        
+        function updateSystemHealth(health) {
+            const container = document.getElementById('systemHealth');
+            const statusIndicator = document.getElementById('systemStatus');
+            
+            // Update status indicator
+            statusIndicator.className = 'status-indicator status-' + 
+                (health.status === 'healthy' ? 'healthy' : 
+                 health.status === 'warning' ? 'warning' : 'error');
+            
+            // Update health metrics
+            container.innerHTML = `
+                <div class="metric-row">
+                    <span class="metric-label">Overall Status</span>
+                    <span class="metric-value">${health.status.toUpperCase()}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Database</span>
+                    <span class="metric-value">${health.checks.database ? '✅ OK' : '❌ FAIL'}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">OpenAI Key</span>
+                    <span class="metric-value">${health.checks.openai_key ? '✅ OK' : '❌ MISSING'}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Google Key</span>
+                    <span class="metric-value">${health.checks.google_key ? '✅ OK' : '❌ MISSING'}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Disk Space</span>
+                    <span class="metric-value">${health.checks.disk_space ? '✅ OK' : '⚠️ LOW'}</span>
+                </div>
+            `;
+            
+            if (health.warnings.length > 0) {
+                container.innerHTML += `
+                    <div class="error-list">
+                        <strong>Warnings:</strong>
+                        ${health.warnings.map(warning => `<div class="error-item">${warning}</div>`).join('')}
+                    </div>
+                `;
+            }
+            
+            if (health.errors.length > 0) {
+                container.innerHTML += `
+                    <div class="error-list">
+                        <strong>Errors:</strong>
+                        ${health.errors.map(error => `<div class="error-item">${error}</div>`).join('')}
+                    </div>
+                `;
+            }
+        }
+        
+        function updateServiceStatus(services) {
+            const container = document.getElementById('serviceStatus');
+            
+            container.innerHTML = Object.entries(services).map(([service, status]) => `
+                <div class="metric-row">
+                    <span class="metric-label">${service.replace('_', ' ').toUpperCase()}</span>
+                    <span class="metric-value">${status ? '✅ RUNNING' : '❌ FAILED'}</span>
+                </div>
+            `).join('');
+        }
+        
+        function updateErrorStats(stats) {
+            const container = document.getElementById('errorStats');
+            
+            container.innerHTML = `
+                <div class="metric-row">
+                    <span class="metric-label">Total Errors</span>
+                    <span class="metric-value">${stats.total_errors}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Recent Errors (24h)</span>
+                    <span class="metric-value">${stats.recent_errors}</span>
+                </div>
+            `;
+            
+            if (stats.error_types && Object.keys(stats.error_types).length > 0) {
+                container.innerHTML += '<div style="margin-top: 12px;"><strong>Error Distribution:</strong></div>';
+                container.innerHTML += Object.entries(stats.error_types).map(([type, count]) => `
+                    <div class="metric-row">
+                        <span class="metric-label">${type}</span>
+                        <span class="metric-value">${count}</span>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function updateRecentErrors(errors) {
+            const container = document.getElementById('recentErrors');
+            
+            if (errors.length === 0) {
+                container.innerHTML = `
+                    <div class="metric-row">
+                        <span class="metric-label">No recent errors</span>
+                        <span class="metric-value">✅</span>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="error-list">
+                    ${errors.slice(0, 5).map(error => `
+                        <div class="error-item">
+                            <div><span class="error-code">[${error.error_code}]</span> ${error.error_name}</div>
+                            <div style="margin-top: 4px; font-size: 12px; color: #86868b;">
+                                ${error.message}
+                            </div>
+                            <div style="margin-top: 4px; font-size: 11px; color: #666;">
+                                ${new Date(error.timestamp).toLocaleString()}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function showRefreshIndicator(show) {
+            const indicator = document.getElementById('refreshIndicator');
+            if (show) {
+                indicator.style.display = 'inline';
+                indicator.classList.add('loading');
+            } else {
+                indicator.style.display = 'none';
+                indicator.classList.remove('loading');
+            }
+        }
+        
+        function showError(message) {
+            // Simple error display - in a real app you'd want a proper notification system
+            alert(message);
+        }
+        
+        async function refreshDiagnostics() {
+            await loadDiagnostics();
+        }
+        
+        async function generateErrorReport() {
+            try {
+                const response = await fetch('/error-report');
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Error report generated: ${data.filename}`);
+                } else {
+                    alert(`Failed to generate error report: ${data.error}`);
+                }
+            } catch (error) {
+                alert('Failed to generate error report');
+            }
+        }
+        
+        async function testErrorHandling() {
+            // Test error handling by making an invalid request
+            try {
+                await fetch('/generate-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ invalid: 'data' })
+                });
+                
+                // Refresh diagnostics to show new error
+                setTimeout(refreshDiagnostics, 1000);
+                alert('Test error generated - check error statistics');
+            } catch (error) {
+                alert('Error test completed');
+            }
+        }
+        
+        function clearErrorHistory() {
+            if (confirm('Are you sure you want to clear the error history?')) {
+                // This would need a backend endpoint to actually clear
+                alert('Error history clearing not implemented yet');
+            }
+        }
+        
+        // Load diagnostics when page loads
+        window.addEventListener('load', loadDiagnostics);
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadDiagnostics, 30000);
+    </script>
+</body>
+</html>

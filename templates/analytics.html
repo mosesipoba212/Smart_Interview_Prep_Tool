@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Smart Interview Prep</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #f5f5f7;
+            line-height: 1.4;
+            padding: 48px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .title {
+            font-size: 48px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #f5f5f7 0%, #86868b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 21px;
+            color: #86868b;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+        
+        .analytics-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+        
+        .analytics-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #f5f5f7;
+        }
+        
+        .card-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #0071e3;
+            margin-bottom: 8px;
+        }
+        
+        .card-description {
+            font-size: 14px;
+            color: #a1a1a6;
+        }
+        
+        .back-link {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #f5f5f7;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            backdrop-filter: blur(20px);
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 24px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chart-placeholder {
+            color: #86868b;
+            font-size: 18px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Back to Dashboard</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Analytics Dashboard</h1>
+            <p class="subtitle">Track your interview preparation progress</p>
+        </div>
+        
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <h3 class="card-title">Total Interviews</h3>
+                <div class="card-value" id="totalInterviews">0</div>
+                <p class="card-description">Interviews logged in system</p>
+            </div>
+            
+            <div class="analytics-card">
+                <h3 class="card-title">Average Rating</h3>
+                <div class="card-value" id="averageRating">0.0</div>
+                <p class="card-description">Out of 10 points</p>
+            </div>
+            
+            <div class="analytics-card">
+                <h3 class="card-title">Success Rate</h3>
+                <div class="card-value" id="successRate">0%</div>
+                <p class="card-description">Positive outcomes</p>
+            </div>
+            
+            <div class="analytics-card">
+                <h3 class="card-title">Prep Hours</h3>
+                <div class="card-value" id="prepHours">0</div>
+                <p class="card-description">Total preparation time</p>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-placeholder">
+                📊 Performance trends chart will be displayed here
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Load analytics data when page loads
+        window.addEventListener('load', function() {
+            fetch('/performance-stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalInterviews').textContent = data.total_interviews || 0;
+                    document.getElementById('averageRating').textContent = (data.average_rating || 0).toFixed(1);
+                    
+                    // Calculate success rate if we have recent interviews
+                    if (data.recent_interviews && data.recent_interviews.length > 0) {
+                        const successful = data.recent_interviews.filter(interview => 
+                            interview.outcome === 'success' || interview.outcome === 'offer'
+                        ).length;
+                        const successRate = Math.round((successful / data.recent_interviews.length) * 100);
+                        document.getElementById('successRate').textContent = successRate + '%';
+                    }
+                    
+                    // Calculate total prep hours
+                    const totalHours = data.recent_interviews ? 
+                        data.recent_interviews.reduce((sum, interview) => 
+                            sum + (interview.preparation_hours || 0), 0
+                        ) : 0;
+                    document.getElementById('prepHours').textContent = totalHours;
+                })
+                .catch(error => {
+                    console.error('Error loading analytics:', error);
+                });
+        });
+    </script>
+</body>
+</html>
