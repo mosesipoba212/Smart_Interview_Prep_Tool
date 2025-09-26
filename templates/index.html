@@ -1283,6 +1283,163 @@
             border-color: rgba(255, 255, 255, 0.2);
             transform: translateY(-2px);
         }
+
+        /* Enhanced Interview Item Styles */
+        .enhanced-interview-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .enhanced-interview-item.priority-high {
+            border-left: 4px solid #ff3b30;
+            background: rgba(255, 59, 48, 0.05);
+        }
+
+        .enhanced-interview-item.priority-medium {
+            border-left: 4px solid #ff9500;
+            background: rgba(255, 149, 0, 0.05);
+        }
+
+        .enhanced-interview-item.priority-normal {
+            border-left: 4px solid #34c759;
+            background: rgba(52, 199, 89, 0.05);
+        }
+
+        .interview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .company-info .company-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f5f5f7;
+            margin: 0 0 4px 0;
+        }
+
+        .company-info .position-name {
+            font-size: 16px;
+            color: #a1a1a6;
+            margin: 0;
+        }
+
+        .priority-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .priority-badge.priority-high {
+            background: rgba(255, 59, 48, 0.2);
+            color: #ff6b60;
+        }
+
+        .priority-badge.priority-medium {
+            background: rgba(255, 149, 0, 0.2);
+            color: #ffb340;
+        }
+
+        .priority-badge.priority-normal {
+            background: rgba(52, 199, 89, 0.2);
+            color: #66d585;
+        }
+
+        .interview-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+        }
+
+        .detail-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .detail-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #86868b;
+            text-transform: uppercase;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: #f5f5f7;
+            font-weight: 500;
+        }
+
+        .interview-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-prep, .btn-track, .btn-details {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-prep {
+            background: #0071e3;
+            color: white;
+        }
+
+        .btn-prep:hover {
+            background: #0077ed;
+            transform: translateY(-1px);
+        }
+
+        .btn-track {
+            background: #34c759;
+            color: white;
+        }
+
+        .btn-track:hover {
+            background: #30d158;
+            transform: translateY(-1px);
+        }
+
+        .btn-details {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f5f5f7;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-details:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
         
         .result-content h4, .schedule-content h4 {
             font-size: 18px;
@@ -2277,9 +2434,22 @@
                     </p>
                     <div class="card-buttons">
                         <button class="btn-card" onclick="scanEmails()">Scan Recent Emails</button>
+                        <button class="btn-card" onclick="syncGmailData()">📧 Sync with Tracker</button>
                         <button class="btn-card" onclick="showEmailSettings()">Settings</button>
                     </div>
                     <div id="email-results" class="results"></div>
+                </div>
+                
+                <!-- Gmail Integration Card -->
+                <div class="dashboard-card">
+                    <h3 class="card-title">🤖 Gmail Integration</h3>
+                    <p class="card-description">
+                        Automatically sync your Gmail to populate the application tracker with real job application data and interview invitations.
+                    </p>
+                    <div class="card-buttons">
+                        <button class="btn-card" onclick="autoPopulateFromGmail()">🚀 Auto-Populate Tracker</button>
+                        <button class="btn-card" onclick="getGmailSyncStatus()">📊 Sync Status</button>
+                    </div>
                 </div>
                 
                 <!-- Performance Analytics Card -->
@@ -2415,10 +2585,13 @@
             }, 3000);
         }
 
-        // Scan emails for interviews
+        // Scan emails for interviews with enhanced feedback
         async function scanEmails() {
             showLoading();
             try {
+                // Show initial scanning message
+                showNotification('🔍 Scanning your Gmail for interview invitations...', 'info');
+                
                 // Use GET request instead of POST to avoid Flask issues
                 const response = await fetch('/scan-emails?days_back=7', {
                     method: 'GET',
@@ -2431,7 +2604,68 @@
                 
                 if (data.success) {
                     displayEmailResults(data.interviews);
-                    showNotification('Email scan completed successfully!');
+                    
+                    if (data.interviews && data.interviews.length > 0) {
+                        showNotification(`✅ Found ${data.interviews.length} interview invitation(s)!`, 'success');
+                    } else {
+                        showNotification(`📧 No interview emails found in the last 7 days. 
+                        
+Try:
+• Extending search to 30 days: Click "Scan Extended"
+• Check if your emails contain keywords: "interview", "phone call", "meeting", "video call"
+• Make sure you're logged into the correct Gmail account`, 'info');
+                        
+                        // Add extended scan option
+                        setTimeout(() => {
+                            const extendedBtn = document.createElement('button');
+                            extendedBtn.className = 'btn-secondary';
+                            extendedBtn.textContent = '🔍 Scan Last 30 Days';
+                            extendedBtn.onclick = () => scanEmailsExtended(30);
+                            
+                            const resultsDiv = document.getElementById('email-results');
+                            if (resultsDiv) {
+                                resultsDiv.innerHTML += '<div style="text-align: center; margin-top: 20px;"></div>';
+                                resultsDiv.querySelector('div').appendChild(extendedBtn);
+                            }
+                        }, 1000);
+                    }
+                } else {
+                    showNotification('Failed to scan emails: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Error scanning emails: ' + error.message, 'error');
+            }
+            hideLoading();
+        }
+        
+        // Extended email scan function
+        async function scanEmailsExtended(days) {
+            showLoading();
+            try {
+                showNotification(`🔍 Scanning last ${days} days for interview emails...`, 'info');
+                
+                const response = await fetch(`/scan-emails?days_back=${days}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayEmailResults(data.interviews);
+                    
+                    if (data.interviews && data.interviews.length > 0) {
+                        showNotification(`✅ Found ${data.interviews.length} interview email(s) in the last ${days} days!`, 'success');
+                    } else {
+                        showNotification(`📧 No interview emails found in the last ${days} days.
+                        
+This could mean:
+• You haven't received interview invitations recently
+• Your interview emails use different keywords
+• Try checking your email manually for messages containing "interview", "phone call", or "meeting"`, 'info');
+                    }
                 } else {
                     showNotification('Failed to scan emails: ' + data.error, 'error');
                 }
@@ -2441,29 +2675,95 @@
             hideLoading();
         }
 
-        // Display email scan results with animation
+        // Display email scan results with enhanced information
         function displayEmailResults(interviews) {
             const resultsDiv = document.getElementById('email-results');
             if (!interviews || interviews.length === 0) {
-                resultsDiv.innerHTML = '<p class="empty-state">No interviews found in recent emails.</p>';
+                resultsDiv.innerHTML = `
+                    <div class="empty-state" style="background: rgba(255, 255, 255, 0.02); padding: 40px; border-radius: 12px; text-align: center;">
+                        <h3>📧 No Interview Emails Found</h3>
+                        <p style="color: #86868b; margin: 16px 0;">No interview invitations detected in your recent emails.</p>
+                        <div style="margin-top: 24px;">
+                            <button class="btn-secondary" onclick="scanEmailsExtended(30)" style="margin-right: 12px;">
+                                🔍 Scan Last 30 Days
+                            </button>
+                            <button class="btn-secondary" onclick="showEmailTips()">
+                                💡 Email Detection Tips
+                            </button>
+                        </div>
+                    </div>
+                `;
                 return;
             }
             
-            let html = '<div class="results-header">Found Interviews</div><div class="results-list">';
+            let html = '<div class="results-header">🎯 Interview Invitations Found</div><div class="results-list">';
             interviews.forEach((interview, index) => {
+                // Format the interview date and time
+                const interviewDate = interview.interview_date || 'Date TBD';
+                const interviewTime = interview.interview_time || 'Time TBD';
+                const platform = interview.platform || 'Platform TBD';
+                const interviewer = interview.interviewer || 'Interviewer TBD';
+                const priority = interview.priority || 'normal';
+                
+                // Priority styling
+                const priorityClass = priority === 'high' ? 'priority-high' : 
+                                   priority === 'medium' ? 'priority-medium' : 'priority-normal';
+                
                 html += `
-                    <div class="result-item" style="animation-delay: ${index * 0.1}s">
-                        <div class="result-content">
-                            <h4>${interview.company}</h4>
-                            <p>${interview.position}</p>
-                            <div class="result-meta">
-                                <span class="tag">${interview.type}</span>
-                                <span class="date">${interview.date || 'Date TBD'}</span>
+                    <div class="result-item enhanced-interview-item ${priorityClass}" style="animation-delay: ${index * 0.1}s">
+                        <div class="interview-header">
+                            <div class="company-info">
+                                <h4 class="company-name">🏢 ${interview.company || 'Unknown Company'}</h4>
+                                <p class="position-name">📋 ${interview.position || 'Unknown Position'}</p>
+                            </div>
+                            <div class="priority-badge ${priorityClass}">
+                                ${priority.toUpperCase()}
                             </div>
                         </div>
-                        <div class="result-actions">
-                            <button class="btn-card" onclick="scheduleForInterview('${interview.company}', '${interview.date}')">
-                                Schedule Prep
+                        
+                        <div class="interview-details-grid">
+                            <div class="detail-item">
+                                <span class="detail-icon">📅</span>
+                                <div class="detail-content">
+                                    <span class="detail-label">Interview Date</span>
+                                    <span class="detail-value">${interviewDate}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <span class="detail-icon">⏰</span>
+                                <div class="detail-content">
+                                    <span class="detail-label">Time</span>
+                                    <span class="detail-value">${interviewTime}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <span class="detail-icon">💻</span>
+                                <div class="detail-content">
+                                    <span class="detail-label">Platform</span>
+                                    <span class="detail-value">${platform}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <span class="detail-icon">👤</span>
+                                <div class="detail-content">
+                                    <span class="detail-label">Interviewer</span>
+                                    <span class="detail-value">${interviewer}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="interview-actions">
+                            <button class="btn-prep" onclick="scheduleForInterview('${interview.company}', '${interviewDate}', '${interview.position}')">
+                                🎯 Schedule Prep
+                            </button>
+                            <button class="btn-track" onclick="trackApplication('${interview.company}', '${interview.position}', 'interview_scheduled')">
+                                📊 Track Application
+                            </button>
+                            <button class="btn-details" onclick="viewInterviewDetails('${interview.id}')">
+                                👁️ View Details
                             </button>
                         </div>
                     </div>
@@ -2471,6 +2771,113 @@
             });
             html += '</div>';
             resultsDiv.innerHTML = html;
+        }
+
+        // Track application function
+        async function trackApplication(company, position, status) {
+            try {
+                const response = await fetch('/log-application', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        company: company,
+                        position: position,
+                        application_date: new Date().toISOString().split('T')[0],
+                        status: status,
+                        platform: 'Email Detection',
+                        notes: 'Detected from email scan'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showNotification(`Application tracked: ${company} - ${position}`, 'success');
+                } else {
+                    showNotification('Failed to track application: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Error tracking application: ' + error.message, 'error');
+            }
+        }
+
+        // View interview details function
+        function viewInterviewDetails(interviewId) {
+            // For now, show a modal with interview details
+            showNotification('Interview details feature coming soon!', 'info');
+        }
+
+        // Schedule for interview function with enhanced parameters
+        function scheduleForInterview(company, date, position) {
+            const message = `Schedule prep for ${position} at ${company} on ${date}`;
+            showNotification(message, 'success');
+        }
+        
+        // Show email detection tips
+        function showEmailTips() {
+            const modal = document.createElement('div');
+            modal.className = 'interview-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>📧 Email Detection Guide</h2>
+                        <button class="modal-close" onclick="closeModal()">&times;</button>
+                    </div>
+                    <div style="padding: 24px;">
+                        <div style="margin-bottom: 24px;">
+                            <h3>🔍 What We Look For</h3>
+                            <p>The system scans your Gmail for emails containing these keywords:</p>
+                            <ul style="margin: 12px 0; padding-left: 20px;">
+                                <li><strong>Subject line:</strong> "interview", "phone call", "meeting", "video call", "screening"</li>
+                                <li><strong>Email body:</strong> "interview", "schedule a call", "available for"</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="margin-bottom: 24px;">
+                            <h3>✅ Emails That Get Detected</h3>
+                            <div style="background: rgba(52, 199, 89, 0.1); padding: 12px; border-radius: 8px; margin: 8px 0;">
+                                <strong>Subject:</strong> "Interview Invitation - Software Engineer"<br>
+                                <strong>From:</strong> hr@company.com
+                            </div>
+                            <div style="background: rgba(52, 199, 89, 0.1); padding: 12px; border-radius: 8px; margin: 8px 0;">
+                                <strong>Subject:</strong> "Phone Screen Opportunity"<br>
+                                <strong>Body:</strong> "Are you available for a phone call..."
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 24px;">
+                            <h3>❌ Emails That Don't Get Detected</h3>
+                            <div style="background: rgba(255, 59, 48, 0.1); padding: 12px; border-radius: 8px; margin: 8px 0;">
+                                <strong>Subject:</strong> "Thanks for applying"<br>
+                                <strong>Body:</strong> "We received your application..."
+                            </div>
+                            <div style="background: rgba(255, 59, 48, 0.1); padding: 12px; border-radius: 8px; margin: 8px 0;">
+                                <strong>Subject:</strong> "Application Update"<br>
+                                <strong>Body:</strong> "Your application is under review..."
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3>💡 Tips to Get Better Results</h3>
+                            <ul style="margin: 12px 0; padding-left: 20px;">
+                                <li>Make sure you're logged into the correct Gmail account</li>
+                                <li>Check if your interview emails contain the keywords above</li>
+                                <li>Try scanning a longer time period (30+ days)</li>
+                                <li>Look in your Gmail manually to see if you have interview emails</li>
+                                <li>The system works best with formal interview invitations</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-primary" onclick="closeModal()">Got it!</button>
+                        <button class="btn-secondary" onclick="closeModal(); scanEmailsExtended(60);">Try 60 Days</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            setTimeout(() => modal.classList.add('show'), 10);
         }
 
         // Generate questions for specific interview
@@ -3368,7 +3775,8 @@
         }
 
         function viewAnalytics() {
-            viewDashboard();
+            // Navigate to the analytics page
+            window.location.href = '/analytics';
         }
         
         // Mock Interview Functions
@@ -3749,6 +4157,112 @@ Keep practicing and good luck with your real interviews!
                 • Take your time and ask clarifying questions
                 • Review feedback carefully and implement suggestions
             `, 'info');
+        }
+        
+        // Gmail Sync Functions
+        async function syncGmailData() {
+            showLoading();
+            try {
+                showNotification('🔄 Syncing your Gmail with application tracker...', 'info');
+                
+                const response = await fetch('/sync-gmail-applications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        days_back: 30  // Sync last 30 days
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(`✅ Gmail sync complete! 
+                    
+📧 ${data.data.processed_emails} emails processed
+➕ ${data.data.new_applications} new applications added  
+🔄 ${data.data.updated_applications} applications updated
+                    
+Your analytics will now show real data from your Gmail!`, 'success');
+                    
+                    // Refresh the dashboard to show new data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    showNotification('❌ Gmail sync failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('❌ Error during Gmail sync: ' + error.message, 'error');
+            }
+            hideLoading();
+        }
+        
+        async function autoPopulateFromGmail() {
+            if (!confirm('This will scan your Gmail and populate the application tracker with real data from your emails. This may take a moment. Continue?')) {
+                return;
+            }
+            
+            showLoading();
+            try {
+                showNotification('🤖 Auto-populating application tracker from Gmail...', 'info');
+                
+                const response = await fetch('/auto-populate-from-gmail', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        days_back: 90,  // Look back 3 months for initial population
+                        clear_sample_data: false
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(`🎉 Auto-population complete!
+                    
+📧 Scanned ${data.details.emails_scanned} emails
+➕ Added ${data.details.new_applications} applications
+🔄 Updated ${data.details.updated_applications} existing applications
+                    
+Your tracker now contains real data from your Gmail!`, 'success');
+                    
+                    // Refresh to show new data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    showNotification('❌ Auto-population failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('❌ Error during auto-population: ' + error.message, 'error');
+            }
+            hideLoading();
+        }
+        
+        async function getGmailSyncStatus() {
+            try {
+                const response = await fetch('/gmail-sync-status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const summary = data.sync_summary;
+                    showNotification(`📊 Gmail Sync Status:
+                    
+📋 Total Applications: ${summary.total_applications || 0}
+🏢 Companies: ${summary.total_companies || 0}  
+📞 Interviews: ${summary.interview_invitations || 0}
+📈 Response Rate: ${summary.response_rate || 0}%
+⏰ Last Sync: ${summary.last_sync ? new Date(summary.last_sync).toLocaleString() : 'Never'}`, 'info');
+                } else {
+                    showNotification('Error getting sync status: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Error getting sync status: ' + error.message, 'error');
+            }
         }
 
         // Enhanced page initialization

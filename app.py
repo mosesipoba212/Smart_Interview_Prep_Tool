@@ -20,12 +20,13 @@ from src.utils.dependency_manager import safe_import, get_dependency_status
 
 # Core imports with fallback handling
 from src.email_parser.gmail_service import GmailService
-from src.email_parser.simplified_gmail_service import SimplifiedGmailService
+from src.email_parser.gmail_sync import GmailApplicationSync
 from src.performance_tracker.tracker import PerformanceTracker
 from src.interview_detector.detector import InterviewDetector
 from src.question_banks.custom_banks import QuestionBanks
 from src.company_guides.company_guides import CompanyGuides
 from src.mock_interview.simulator import MockInterviewSimulator
+from src.application_tracker.tracker import ApplicationTracker
 
 # Load environment configuration
 load_dotenv()
@@ -64,40 +65,16 @@ class SmartInterviewPrepApp:
         print("🚀 Initializing Smart Interview Prep Tool...")
         
         try:
-            # Core email intelligence - try real Gmail first, fallback to mock
-            try:
-                print("🔑 Attempting Gmail authentication...")
-                import signal
-                import threading
-                
-                # Create Gmail service with timeout protection
-                gmail_result = [None]
-                gmail_error = [None]
-                
-                def create_gmail_service():
-                    try:
-                        service = GmailService()
-                        gmail_result[0] = service
-                    except Exception as e:
-                        gmail_error[0] = e
-                
-                # Start Gmail authentication in thread with timeout
-                gmail_thread = threading.Thread(target=create_gmail_service)
-                gmail_thread.daemon = True
-                gmail_thread.start()
-                gmail_thread.join(timeout=10)  # 10 second timeout
-                
-                if gmail_result[0] and gmail_result[0].service:
-                    self.gmail_service = gmail_result[0]
-                    print("✅ Real Gmail service ready")
-                else:
-                    raise Exception("Gmail authentication failed or timed out")
-                    
-            except Exception as e:
-                print(f"⚠️  Gmail authentication issue: {e}")
-                print("🔄 Using simplified Gmail service with mock data...")
-                self.gmail_service = SimplifiedGmailService()
-                print("✅ Email intelligence ready (mock data)")
+            # Initialize real Gmail service only
+            print("🔑 Initializing Gmail service...")
+            self.gmail_service = GmailService()
+            
+            if self.gmail_service and self.gmail_service.service:
+                print("✅ Gmail service connected and authenticated")
+            else:
+                print("❌ Gmail service failed to authenticate")
+                print("� Please ensure credentials.json is configured and OAuth is completed")
+                self.gmail_service = None
             
             # Performance tracking
             self.performance_tracker = PerformanceTracker()
@@ -118,6 +95,14 @@ class SmartInterviewPrepApp:
             # Mock interview simulator
             self.mock_interview = MockInterviewSimulator()
             print("✅ Mock interview simulator ready")
+            
+            # Application tracker
+            self.application_tracker = ApplicationTracker()
+            print("✅ Application tracker ready")
+            
+            # Gmail sync service
+            self.gmail_sync = GmailApplicationSync()
+            print("✅ Gmail sync service ready")
             
             print("\n" + "="*50)
             print("🎉 Smart Interview Prep Tool Ready!")
@@ -177,11 +162,12 @@ def health_check():
 
 @app.route('/scan-emails', methods=['GET', 'POST'])
 def scan_emails():
-    """📧 Scan for interview-related emails"""
+    """📧 Scan for interview-related emails and sync with application tracker"""
     try:
         # Handle both GET and POST requests
         if request.method == 'GET':
             days_back = int(request.args.get('days_back', 7))
+            auto_sync = request.args.get('auto_sync', 'true').lower() == 'true'
         else:
             # Check if request has JSON data
             if not request.is_json:
@@ -190,7 +176,9 @@ def scan_emails():
                     'error': 'Request must be JSON',
                     'interviews': []
                 }), 400
-            days_back = request.json.get('days_back', 7) if request.json else 7
+            data = request.json or {}
+            days_back = data.get('days_back', 7)
+            auto_sync = data.get('auto_sync', True)
         
         # Check if Gmail service is available
         if not hasattr(prep_app, 'gmail_service') or prep_app.gmail_service is None:
@@ -200,14 +188,31 @@ def scan_emails():
                 'interviews': []
             }), 503
         
-        # Call Gmail service
+        # Call Gmail service for interview detection
         interviews = prep_app.gmail_service.scan_for_interviews(days_back)
         
-        return jsonify({
+        # Auto-sync with application tracker if enabled
+        sync_result = None
+        if auto_sync and hasattr(prep_app, 'gmail_sync'):
+            try:
+                sync_result = prep_app.gmail_sync.sync_gmail_to_applications(days_back)
+            except Exception as sync_error:
+                print(f"Warning: Gmail sync failed: {sync_error}")
+                sync_result = {'success': False, 'error': str(sync_error)}
+        
+        response_data = {
             'success': True,
             'interviews': interviews,
             'count': len(interviews)
-        })
+        }
+        
+        # Add sync information if auto-sync was performed
+        if sync_result:
+            response_data['auto_sync'] = sync_result
+            if sync_result.get('success'):
+                response_data['sync_message'] = f"Also updated application tracker: {sync_result.get('new_applications', 0)} new applications, {sync_result.get('updated_applications', 0)} updates"
+        
+        return jsonify(response_data)
         
     except Exception as e:
         return jsonify({
@@ -215,6 +220,42 @@ def scan_emails():
             'error': f'Email scanning temporarily unavailable: {str(e)}',
             'interviews': []
         }), 500
+
+@app.route('/test-gmail-access', methods=['GET'])
+def test_gmail_access():
+    """🔧 Test Gmail API access and authentication"""
+    try:
+        # Check if Gmail service exists
+        if not hasattr(prep_app, 'gmail_service') or prep_app.gmail_service is None:
+            return jsonify({
+                'success': False,
+                'error': 'Gmail service not initialized',
+                'details': 'Gmail API credentials may be missing or invalid'
+            })
+        
+        # Test basic Gmail API access by fetching profile
+        if hasattr(prep_app.gmail_service, 'service') and prep_app.gmail_service.service:
+            profile = prep_app.gmail_service.service.users().getProfile(userId='me').execute()
+            return jsonify({
+                'success': True,
+                'message': 'Gmail API access successful!',
+                'email': profile.get('emailAddress'),
+                'total_messages': profile.get('messagesTotal', 0),
+                'status': 'authenticated'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Gmail service not authenticated',
+                'details': 'Please complete OAuth authentication'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Gmail API test failed: {str(e)}',
+            'details': 'Authentication or API access issue'
+        })
 
 # ========================================
 # 📊 PERFORMANCE TRACKING ROUTES
@@ -372,7 +413,259 @@ def get_score_progress():
         }), 500
 
 # ========================================
-# 📚 QUESTION BANKS ROUTES
+# � APPLICATION TRACKING ROUTES
+# ========================================
+
+@app.route('/log-application', methods=['POST'])
+def log_application():
+    """📋 Log a new job application"""
+    try:
+        application_data = request.json
+        if not application_data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        # Log the application
+        application_id = prep_app.application_tracker.log_application(application_data)
+        
+        if application_id:
+            return jsonify({
+                'success': True,
+                'message': 'Application logged successfully',
+                'application_id': application_id
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to log application'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/log-response', methods=['POST'])
+def log_response():
+    """📧 Log a company response"""
+    try:
+        response_data = request.json
+        if not response_data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        response_id = prep_app.application_tracker.log_response(response_data)
+        
+        if response_id:
+            return jsonify({
+                'success': True,
+                'message': 'Response logged successfully',
+                'response_id': response_id
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to log response'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/log-outcome', methods=['POST'])
+def log_outcome():
+    """🎯 Log final application outcome"""
+    try:
+        outcome_data = request.json
+        if not outcome_data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        outcome_id = prep_app.application_tracker.log_outcome(outcome_data)
+        
+        if outcome_id:
+            return jsonify({
+                'success': True,
+                'message': 'Outcome logged successfully',
+                'outcome_id': outcome_id
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to log outcome'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/application-stats')
+def application_stats():
+    """📊 Get comprehensive application statistics"""
+    try:
+        stats = prep_app.application_tracker.get_application_stats()
+        interview_analytics = prep_app.application_tracker.get_interview_analytics()
+        
+        return jsonify({
+            'success': True,
+            'application_stats': stats,
+            'interview_analytics': interview_analytics
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'application_stats': {},
+            'interview_analytics': {}
+        }), 500
+
+@app.route('/applications-list')
+def applications_list():
+    """📋 Get list of applications"""
+    try:
+        limit = int(request.args.get('limit', 50))
+        status = request.args.get('status')
+        
+        applications = prep_app.application_tracker.get_applications_list(limit=limit, status=status)
+        
+        return jsonify({
+            'success': True,
+            'applications': applications,
+            'count': len(applications)
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'applications': []
+        }), 500
+
+@app.route('/update-application-status', methods=['POST'])
+def update_application_status():
+    """🔄 Update application status"""
+    try:
+        data = request.json
+        application_id = data.get('application_id')
+        new_status = data.get('status')
+        
+        if not application_id or not new_status:
+            return jsonify({
+                'success': False,
+                'error': 'Missing application_id or status'
+            }), 400
+        
+        success = prep_app.application_tracker.update_application_status(application_id, new_status)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Status updated successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to update status'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ========================================
+# 📧 GMAIL SYNC ROUTES  
+# ========================================
+
+@app.route('/sync-gmail-applications', methods=['POST'])
+def sync_gmail_applications():
+    """🔄 Sync Gmail emails with application tracker"""
+    try:
+        data = request.json or {}
+        days_back = data.get('days_back', 30)
+        
+        # Perform Gmail sync
+        result = prep_app.gmail_sync.sync_gmail_to_applications(days_back)
+        
+        return jsonify({
+            'success': result['success'],
+            'message': f"Gmail sync completed! Processed {result['processed_emails']} emails, added {result['new_applications']} new applications, updated {result['updated_applications']} existing applications.",
+            'data': result
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Gmail sync failed: {str(e)}',
+            'data': {
+                'processed_emails': 0,
+                'new_applications': 0,
+                'updated_applications': 0
+            }
+        }), 500
+
+@app.route('/gmail-sync-status')
+def gmail_sync_status():
+    """📊 Get Gmail sync status and summary"""
+    try:
+        summary = prep_app.gmail_sync.get_sync_summary()
+        
+        return jsonify({
+            'success': True,
+            'sync_summary': summary
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'sync_summary': {}
+        }), 500
+
+@app.route('/auto-populate-from-gmail', methods=['POST'])
+def auto_populate_from_gmail():
+    """🤖 Auto-populate application tracker with Gmail data"""
+    try:
+        data = request.json or {}
+        days_back = data.get('days_back', 60)  # Default to 60 days for initial population
+        
+        # Clear existing sample data first (optional)
+        clear_sample_data = data.get('clear_sample_data', False)
+        
+        if clear_sample_data:
+            # You can add logic here to clear sample data if needed
+            pass
+        
+        # Sync Gmail data
+        result = prep_app.gmail_sync.sync_gmail_to_applications(days_back)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': f"Successfully populated tracker with {result['new_applications']} applications from your Gmail!",
+                'details': {
+                    'emails_scanned': result['total_emails_scanned'],
+                    'emails_processed': result['processed_emails'],
+                    'new_applications': result['new_applications'],
+                    'updated_applications': result['updated_applications']
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Unknown error during sync')
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Auto-population failed: {str(e)}'
+        }), 500
+
+# ========================================
+# �📚 QUESTION BANKS ROUTES
 # ========================================
 
 @app.route('/question-banks/<industry>')
@@ -450,7 +743,7 @@ def mock_interview_page():
             print(f"⚠️ Backend error, using defaults: {backend_error}")
             interview_types = default_interview_types
             
-        result = render_template('mock_interview_new.html', interview_types=interview_types)
+        result = render_template('mock_interview.html', interview_types=interview_types)
         print("✅ Template rendered successfully")
         return result
     except Exception as e:

@@ -64,29 +64,18 @@ class GmailService:
                     return None
                 
                 try:
-                    print("� Starting Gmail OAuth flow...")
+                    print("🔑 Starting Gmail OAuth flow...")
                     print("⚠️  Note: App is in testing mode - contact developer for access")
-                    
-                    # Set a timeout for OAuth flow
-                    import signal
-                    import threading
-                    
-                    def timeout_handler():
-                        print("\n⏰ OAuth timeout - falling back to mock data")
-                        return None
-                    
-                    # Start OAuth flow with timeout
-                    timer = threading.Timer(30.0, timeout_handler)
-                    timer.start()
+                    print("🌐 Opening browser for authentication...")
+                    print("⏰ You have 5 minutes to complete authentication")
                     
                     try:
                         flow = InstalledAppFlow.from_client_secrets_file(
                             'credentials.json', self.SCOPES)
-                        creds = flow.run_local_server(port=0, timeout_seconds=30)
-                        timer.cancel()
+                        # Use port 8080 to match your Google Cloud Console setting
+                        creds = flow.run_local_server(port=8080, open_browser=True)
                         print("✅ Gmail authentication successful!")
                     except Exception as auth_error:
-                        timer.cancel()
                         if "access_denied" in str(auth_error) or "403" in str(auth_error):
                             print("❌ Gmail app not verified by Google")
                             print("💡 Using mock email data for demonstration")
@@ -207,7 +196,7 @@ class GmailService:
         return body
     
     def scan_for_interviews(self, days_back: int = 14) -> List[Dict[str, Any]]:
-        """Scan emails for interview opportunities"""
+        """Scan emails for interview opportunities with enhanced parsing"""
         try:
             # Use the existing fetch_recent_emails method
             emails = self.fetch_recent_emails(days_back=days_back)
@@ -217,7 +206,8 @@ class GmailService:
             interview_keywords = [
                 'interview', 'phone screen', 'technical round', 'hiring manager',
                 'coding challenge', 'final round', 'onsite', 'video call',
-                'assessment', 'evaluation', 'selection process'
+                'assessment', 'evaluation', 'selection process', 'schedule',
+                'available for', 'meeting request', 'call with', 'conversation'
             ]
             
             for email in emails:
@@ -226,13 +216,25 @@ class GmailService:
                 body_lower = email.get('body', '').lower()
                 
                 if any(keyword in subject_lower or keyword in body_lower for keyword in interview_keywords):
+                    # Parse detailed interview information
+                    interview_details = self.parse_interview_details(email)
+                    
                     interview_emails.append({
                         'id': email.get('id'),
                         'subject': email.get('subject'),
                         'sender': email.get('sender'),
-                        'date': email.get('date'),
+                        'email_date': email.get('date'),
                         'snippet': email.get('body', '')[:200] + '...' if len(email.get('body', '')) > 200 else email.get('body', ''),
-                        'type': 'interview_invitation'
+                        'type': 'interview_invitation',
+                        # Enhanced details
+                        'company': interview_details['company'],
+                        'position': interview_details['position'],
+                        'interview_date': interview_details['date'],
+                        'interview_time': interview_details.get('time', 'Time TBD'),
+                        'platform': interview_details['platform'],
+                        'interviewer': interview_details['interviewer'],
+                        'status': 'pending',  # Default status
+                        'priority': self.determine_email_priority(email)
                     })
             
             print(f"📧 Found {len(interview_emails)} interview-related emails")
@@ -256,6 +258,7 @@ class GmailService:
         
         # Extract interview date/time
         interview_date = self.extract_interview_date(body)
+        interview_time = self.extract_interview_time(body)
         
         # Extract meeting platform
         platform = self.extract_meeting_platform(body)
@@ -267,6 +270,7 @@ class GmailService:
             'company': company,
             'position': position,
             'date': interview_date,
+            'time': interview_time,
             'platform': platform,
             'interviewer': interviewer,
             'subject': email.get('subject', ''),
@@ -279,10 +283,35 @@ class GmailService:
         # Try to extract from email domain
         if '@' in sender_email:
             domain = sender_email.split('@')[-1].lower()
-            # Remove common email domains
-            if domain not in ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com']:
-                company = domain.split('.')[0]
-                return company.title()
+            # Remove common email domains and subdomains
+            if domain not in ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com']:
+                # Handle subdomains (e.g., recruiting.company.com)
+                domain_parts = domain.split('.')
+                if len(domain_parts) >= 2:
+                    # Skip common subdomains
+                    if domain_parts[0] in ['www', 'mail', 'email', 'recruiting', 'hr', 'careers', 'jobs']:
+                        if len(domain_parts) > 2:
+                            company = domain_parts[1]
+                        else:
+                            company = domain_parts[0]
+                    else:
+                        company = domain_parts[0]
+                    
+                    # Clean up and format company name
+                    company = company.replace('-', ' ').replace('_', ' ')
+                    return company.title()
+        
+        # Try to extract from sender name part
+        if '<' in sender_email:
+            name_part = sender_email.split('<')[0].strip()
+            # Look for company indicators in name
+            company_indicators = ['HR', 'Recruiting', 'Talent', 'People', 'Team']
+            for indicator in company_indicators:
+                if indicator in name_part:
+                    parts = name_part.split()
+                    for i, part in enumerate(parts):
+                        if indicator.lower() in part.lower() and i > 0:
+                            return parts[i-1]
         
         return "Unknown Company"
     
@@ -306,18 +335,24 @@ class GmailService:
     
     def extract_interview_date(self, body: str) -> str:
         """Extract interview date from email body"""
-        # Date patterns
+        # Enhanced date patterns
         date_patterns = [
-            r'(?:on|for)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+([a-zA-Z]+\s+\d{1,2})',
-            r'(\d{1,2}/\d{1,2}/\d{4})',
-            r'([a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
-            r'(\d{1,2}\s+[a-zA-Z]+\s+\d{4})'
+            r'(?:on|for|scheduled?\s+for)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+([a-zA-Z]+\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?)',
+            r'(\d{1,2}/\d{1,2}/\d{2,4})',
+            r'(\d{4}-\d{1,2}-\d{1,2})',
+            r'([a-zA-Z]+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})',
+            r'(\d{1,2}\s+[a-zA-Z]+\s+\d{4})',
+            r'(?:available|free)\s+(?:on\s+)?([a-zA-Z]+\s+\d{1,2}(?:st|nd|rd|th)?)',
+            r'(?:next|this)\s+(monday|tuesday|wednesday|thursday|friday)',
+            r'tomorrow|today',
+            r'(\d{1,2}(?:st|nd|rd|th)?\s+of\s+[a-zA-Z]+)'
         ]
         
         for pattern in date_patterns:
             match = re.search(pattern, body, re.IGNORECASE)
             if match:
-                return match.group(0).strip()
+                date_str = match.group(1) if match.lastindex and match.lastindex > 0 else match.group(0)
+                return date_str.strip()
         
         return "Date TBD"
     
@@ -368,3 +403,43 @@ class GmailService:
                     return name.title()
         
         return "Unknown Interviewer"
+    
+    def extract_interview_time(self, body: str) -> str:
+        """Extract interview time from email body"""
+        # Time patterns
+        time_patterns = [
+            r'(\d{1,2}:\d{2}\s*(?:AM|PM|am|pm))',
+            r'(\d{1,2}\s*(?:AM|PM|am|pm))',
+            r'at\s+(\d{1,2}:\d{2})',
+            r'(\d{1,2}:\d{2})',
+            r'(?:between|from)\s+(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm))\s+(?:to|and|-)\s+(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm))',
+            r'(?:morning|afternoon|evening)',
+            r'(\d{1,2}\s*o\'?clock)'
+        ]
+        
+        for pattern in time_patterns:
+            match = re.search(pattern, body, re.IGNORECASE)
+            if match:
+                if match.lastindex and match.lastindex > 1:
+                    # Handle time ranges
+                    return f"{match.group(1)} - {match.group(2)}"
+                else:
+                    return match.group(1).strip()
+        
+        return "Time TBD"
+    
+    def determine_email_priority(self, email: Dict[str, Any]) -> str:
+        """Determine priority of interview email"""
+        subject = email.get('subject', '').lower()
+        body = email.get('body', '').lower()
+        
+        # High priority indicators
+        high_priority = ['urgent', 'asap', 'immediate', 'final round', 'offer', 'decision']
+        medium_priority = ['phone screen', 'first round', 'initial', 'screening']
+        
+        if any(indicator in subject or indicator in body for indicator in high_priority):
+            return 'high'
+        elif any(indicator in subject or indicator in body for indicator in medium_priority):
+            return 'medium'
+        else:
+            return 'normal'
