@@ -120,6 +120,48 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             margin-top: 24px;
             height: 400px;
+            overflow: hidden;
+        }
+        
+        .chart-container.table-container {
+            height: auto;
+            max-height: 600px;
+            overflow: visible;
+        }
+        
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Table specific styles */
+        .scrollable-table {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .table-header-sticky {
+            position: sticky;
+            top: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 10;
         }
         
         .chart-grid {
@@ -127,6 +169,21 @@
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 24px;
             margin-top: 24px;
+        }
+        
+        /* Ensure all content stays within containers */
+        .chart-container canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .analytics-card {
+            overflow: hidden;
+        }
+        
+        .analytics-grid {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         .chart-title {
@@ -274,16 +331,17 @@
             </div>
         </div>
 
-        <!-- Top Companies Table -->
-        <div class="chart-container">
-            <div class="chart-title">🏢 Top Companies Applied To</div>
-            <div id="topCompaniesTable">
-                <table id="companiesTable" style="width: 100%; color: #f5f5f7;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
-                            <th style="padding: 12px; text-align: left;">Company</th>
-                            <th style="padding: 12px; text-align: center;">Applications</th>
-                            <th style="padding: 12px; text-align: center;">Response Rate</th>
+        <!-- Applications Breakdown Table -->
+        <div class="chart-container table-container">
+            <div class="chart-title">🏢 Your Applications Breakdown</div>
+            <div id="topCompaniesTable" class="scrollable-table">
+                <table id="companiesTable" style="width: 100%; color: #f5f5f7; border-collapse: collapse;">
+                    <thead class="table-header-sticky">
+                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.2);">
+                            <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 14px;">Company</th>
+                            <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 14px;">Job Role</th>
+                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; font-size: 14px;">Status</th>
+                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; font-size: 14px;">Applied Date</th>
                         </tr>
                     </thead>
                     <tbody id="companiesTableBody">
@@ -292,8 +350,8 @@
             </div>
             <div id="topCompaniesNoData" class="no-data" style="display: none;">
                 <div class="no-data-icon">🏢</div>
-                <div class="no-data-text">No Company Data</div>
-                <div class="no-data-subtext">Apply to companies to see your application history</div>
+                <div class="no-data-text">No Application Data</div>
+                <div class="no-data-subtext">Start applying to jobs to see your application history</div>
             </div>
         </div>
         
@@ -699,32 +757,84 @@
         }
 
         function createTopCompaniesTable(data) {
-            const appStats = data.application_stats || {};
-            const topCompanies = appStats.top_companies || [];
-            
-            if (topCompanies.length === 0) {
-                document.getElementById('topCompaniesTable').style.display = 'none';
-                document.getElementById('topCompaniesNoData').style.display = 'flex';
-                return;
-            }
+            // Fetch detailed applications list instead of just company stats
+            fetch('/applications-list?limit=100')
+                .then(response => response.json())
+                .then(applicationsData => {
+                    if (!applicationsData.success || applicationsData.applications.length === 0) {
+                        document.getElementById('topCompaniesTable').style.display = 'none';
+                        document.getElementById('topCompaniesNoData').style.display = 'flex';
+                        return;
+                    }
 
-            const tbody = document.getElementById('companiesTableBody');
-            tbody.innerHTML = '';
-            
-            topCompanies.forEach(([company, count]) => {
-                const row = document.createElement('tr');
-                row.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-                
-                // Calculate mock response rate (you can enhance this with real data)
-                const mockResponseRate = Math.floor(Math.random() * 50) + 25;
-                
-                row.innerHTML = `
-                    <td style="padding: 12px;">${company}</td>
-                    <td style="padding: 12px; text-align: center;">${count}</td>
-                    <td style="padding: 12px; text-align: center;">${mockResponseRate}%</td>
-                `;
-                tbody.appendChild(row);
-            });
+                    const tbody = document.getElementById('companiesTableBody');
+                    tbody.innerHTML = '';
+                    
+                    applicationsData.applications.forEach((app, index) => {
+                        const row = document.createElement('tr');
+                        row.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                        row.style.transition = 'background-color 0.2s ease';
+                        
+                        // Add hover effect
+                        row.addEventListener('mouseenter', () => {
+                            row.style.backgroundColor = 'rgba(255,255,255,0.05)';
+                        });
+                        row.addEventListener('mouseleave', () => {
+                            row.style.backgroundColor = 'transparent';
+                        });
+                        
+                        // Format date
+                        const applicationDate = new Date(app.application_date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+                        
+                        // Format status with colors
+                        const statusColors = {
+                            'applied': '#0071e3',
+                            'interview_scheduled': '#34c759',
+                            'rejected': '#ff3b30',
+                            'offer': '#ff9500',
+                            'pending': '#af52de'
+                        };
+                        
+                        const statusColor = statusColors[app.status] || '#86868b';
+                        const statusText = app.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        
+                        row.innerHTML = `
+                            <td style="padding: 12px;">
+                                <div style="font-weight: 600; font-size: 16px;">${app.company}</div>
+                                ${app.location ? `<div style="font-size: 12px; color: #86868b; margin-top: 2px;">📍 ${app.location}</div>` : ''}
+                            </td>
+                            <td style="padding: 12px;">
+                                <div style="font-weight: 500; font-size: 14px;">${app.position}</div>
+                                ${app.platform ? `<div style="font-size: 12px; color: #86868b; margin-top: 2px;">via ${app.platform}</div>` : ''}
+                            </td>
+                            <td style="padding: 12px; text-align: center;">
+                                <span style="
+                                    background: ${statusColor}20; 
+                                    color: ${statusColor}; 
+                                    padding: 4px 12px; 
+                                    border-radius: 20px; 
+                                    font-size: 12px; 
+                                    font-weight: 600;
+                                    text-transform: uppercase;
+                                    letter-spacing: 0.5px;
+                                ">${statusText}</span>
+                            </td>
+                            <td style="padding: 12px; text-align: center; color: #86868b; font-size: 14px;">
+                                ${applicationDate}
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading applications:', error);
+                    document.getElementById('topCompaniesTable').style.display = 'none';
+                    document.getElementById('topCompaniesNoData').style.display = 'flex';
+                });
         }
 
         function showNoDataState() {
