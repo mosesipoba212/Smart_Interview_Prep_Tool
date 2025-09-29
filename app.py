@@ -576,6 +576,144 @@ def update_application_status():
         }), 500
 
 # ========================================
+# 🎯 INTERVIEW STAGE MANAGEMENT ROUTES
+# ========================================
+
+@app.route('/interview-stages')
+def get_interview_stages():
+    """📋 Get available interview stages"""
+    try:
+        stages = prep_app.application_tracker.get_interview_stages()
+        return jsonify({
+            'success': True,
+            'stages': stages
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'stages': {}
+        }), 500
+
+@app.route('/advance-stage', methods=['POST'])
+def advance_interview_stage():
+    """🎯 Advance application to next interview stage"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        application_id = data.get('application_id')
+        new_stage = data.get('stage')
+        stage_details = data.get('details', {})
+        
+        if not application_id or not new_stage:
+            return jsonify({
+                'success': False,
+                'error': 'Missing application_id or stage'
+            }), 400
+        
+        success = prep_app.application_tracker.advance_interview_stage(
+            application_id, new_stage, stage_details
+        )
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'Application advanced to {new_stage}'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to advance stage'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/application-stages/<int:application_id>')
+def get_application_stages(application_id):
+    """📊 Get application with all interview stages"""
+    try:
+        application = prep_app.application_tracker.get_application_with_stages(application_id)
+        
+        if application:
+            return jsonify({
+                'success': True,
+                'application': application
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Application not found'
+            }), 404
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/stage-analytics')
+def get_stage_analytics():
+    """📈 Get interview stage progression analytics"""
+    try:
+        analytics = prep_app.application_tracker.get_stage_analytics()
+        return jsonify({
+            'success': True,
+            'analytics': analytics
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'analytics': {}
+        }), 500
+
+@app.route('/log-online-assessment', methods=['POST'])
+def log_online_assessment():
+    """💻 Log online assessment invitation/completion"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        application_id = data.get('application_id')
+        
+        # Create stage details for online assessment
+        stage_details = {
+            'interview_type': 'online_assessment',
+            'scheduled_date': data.get('due_date'),
+            'platform': data.get('platform', 'Online'),
+            'assessment_details': data.get('assessment_details', ''),
+            'status': data.get('status', 'scheduled')
+        }
+        
+        success = prep_app.application_tracker.advance_interview_stage(
+            application_id, 'online_assessment', stage_details
+        )
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Online assessment logged successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to log online assessment'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ========================================
 # 📧 GMAIL SYNC ROUTES  
 # ========================================
 

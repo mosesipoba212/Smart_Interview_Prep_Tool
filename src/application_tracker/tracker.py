@@ -23,7 +23,7 @@ class ApplicationTracker:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # Applications table
+        # Applications table with enhanced status tracking
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS applications (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,6 +31,8 @@ class ApplicationTracker:
                 position TEXT NOT NULL,
                 application_date DATE NOT NULL,
                 status TEXT DEFAULT 'applied',
+                interview_stage TEXT DEFAULT 'none',
+                current_stage_date DATE,
                 platform TEXT,
                 job_url TEXT,
                 salary_range TEXT,
@@ -55,12 +57,14 @@ class ApplicationTracker:
             )
         ''')
         
-        # Interviews table (detailed interview tracking)
+        # Interviews table (detailed interview tracking with stages)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS interview_sessions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 application_id INTEGER,
                 interview_type TEXT,
+                interview_stage TEXT DEFAULT 'first_stage',
+                stage_order INTEGER DEFAULT 1,
                 scheduled_date DATE,
                 scheduled_time TEXT,
                 platform TEXT,
@@ -70,6 +74,7 @@ class ApplicationTracker:
                 outcome TEXT,
                 duration INTEGER,
                 preparation_time INTEGER,
+                assessment_details TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (application_id) REFERENCES applications (id)
             )
@@ -453,6 +458,182 @@ class ApplicationTracker:
             
         except Exception as e:
             print(f"❌ Error getting interview analytics: {e}")
+            return {}
+        finally:
+            conn.close()
+    
+    def get_interview_stages(self) -> Dict[str, str]:
+        """Get available interview stages"""
+        return {
+            'applied': 'Application Submitted',
+            'application_review': 'Application Under Review',
+            'online_assessment': 'Online Assessment',
+            'phone_screening': 'Phone Screening',
+            'first_interview': 'First Round Interview',
+            'technical_interview': 'Technical Interview', 
+            'second_stage': 'Second Stage Interview',
+            'final_interview': 'Final Round Interview',
+            'reference_check': 'Reference Check',
+            'offer_pending': 'Offer Pending',
+            'offer': 'Offer Received',
+            'rejected': 'Rejected'
+        }
+    
+    def advance_interview_stage(self, application_id: int, new_stage: str, stage_details: Dict[str, Any] = None) -> bool:
+        """Advance application to next interview stage"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            # Update application status and stage
+            cursor.execute('''
+                UPDATE applications 
+                SET status = ?, interview_stage = ?, current_stage_date = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (new_stage, new_stage, datetime.now().date(), application_id))
+            
+            # Log interview session if stage details provided
+            if stage_details:
+                self._log_interview_stage(cursor, application_id, new_stage, stage_details)
+            
+            conn.commit()
+            print(f"✅ Application {application_id} advanced to {new_stage}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error advancing interview stage: {e}")
+            return False
+        finally:
+            conn.close()
+    
+    def _log_interview_stage(self, cursor, application_id: int, stage: str, details: Dict[str, Any]):
+        """Internal method to log interview stage details"""
+        stage_order_map = {
+            'online_assessment': 1,
+            'phone_screening': 2,
+            'first_interview': 3,
+            'technical_interview': 4,
+            'second_stage': 5,
+            'final_interview': 6
+        }
+        
+        cursor.execute('''
+            INSERT INTO interview_sessions (
+                application_id, interview_type, interview_stage, stage_order,
+                scheduled_date, scheduled_time, platform, interviewer_name,
+                status, assessment_details
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            application_id,
+            details.get('interview_type', stage),
+            stage,
+            stage_order_map.get(stage, 0),
+            details.get('scheduled_date'),
+            details.get('scheduled_time'),
+            details.get('platform', ''),
+            details.get('interviewer_name', ''),
+            details.get('status', 'scheduled'),
+            details.get('assessment_details', '')
+        ))
+    
+    def get_application_with_stages(self, application_id: int) -> Dict[str, Any]:
+        """Get application details with all interview stages"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            # Get application details
+            cursor.execute('SELECT * FROM applications WHERE id = ?', (application_id,))
+            app_row = cursor.fetchone()
+            
+            if not app_row:
+                return {}
+            
+            # Convert to dict
+            columns = [description[0] for description in cursor.description]
+            application = dict(zip(columns, app_row))
+            
+            # Get all interview stages for this application
+            cursor.execute('''
+                SELECT * FROM interview_sessions 
+                WHERE application_id = ? 
+                ORDER BY stage_order, created_at
+            ''', (application_id,))
+            
+            stage_columns = [description[0] for description in cursor.description]
+            stages = []
+            for row in cursor.fetchall():
+                stage_dict = dict(zip(stage_columns, row))
+                stages.append(stage_dict)
+            
+            application['interview_stages'] = stages
+            return application
+            
+        except Exception as e:
+            print(f"❌ Error getting application with stages: {e}")
+            return {}
+        finally:
+            conn.close()
+    
+    def get_stage_analytics(self) -> Dict[str, Any]:
+        """Get analytics for interview stage progression"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            # Stage distribution
+            cursor.execute('''
+                SELECT interview_stage, COUNT(*) 
+                FROM applications 
+                WHERE interview_stage IS NOT NULL
+                GROUP BY interview_stage
+            ''')
+            stage_distribution = dict(cursor.fetchall())
+            
+            # Average time in each stage
+            cursor.execute('''
+                SELECT 
+                    interview_stage,
+                    AVG(julianday(updated_at) - julianday(current_stage_date)) as avg_days
+                FROM applications 
+                WHERE interview_stage IS NOT NULL AND current_stage_date IS NOT NULL
+                GROUP BY interview_stage
+            ''')
+            
+            stage_durations = {}
+            for row in cursor.fetchall():
+                stage, avg_days = row
+                stage_durations[stage] = round(avg_days or 0, 1)
+            
+            # Stage progression success rates
+            cursor.execute('''
+                SELECT 
+                    interview_stage,
+                    COUNT(*) as total,
+                    SUM(CASE WHEN status NOT IN ('rejected') THEN 1 ELSE 0 END) as active
+                FROM applications
+                WHERE interview_stage IS NOT NULL
+                GROUP BY interview_stage
+            ''')
+            
+            stage_success = {}
+            for row in cursor.fetchall():
+                stage, total, active = row
+                success_rate = (active / total * 100) if total > 0 else 0
+                stage_success[stage] = {
+                    'total': total,
+                    'active': active,
+                    'success_rate': round(success_rate, 1)
+                }
+            
+            return {
+                'stage_distribution': stage_distribution,
+                'stage_durations': stage_durations,
+                'stage_success_rates': stage_success
+            }
+            
+        except Exception as e:
+            print(f"❌ Error getting stage analytics: {e}")
             return {}
         finally:
             conn.close()

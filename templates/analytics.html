@@ -229,6 +229,46 @@
             <p class="subtitle">Track your interview preparation progress</p>
         </div>
         
+        <!-- Interview Stage Progression -->
+        <h2 class="section-header">🎯 Interview Stage Progression</h2>
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <h3 class="card-title">Online Assessments</h3>
+                <div class="card-value" id="onlineAssessments">0</div>
+                <p class="card-description">Assessments completed</p>
+            </div>
+            
+            <div class="analytics-card">
+                <h3 class="card-title">Phone Screenings</h3>
+                <div class="card-value" id="phoneScreenings">0</div>
+                <p class="card-description">Initial screening calls</p>
+            </div>
+            
+            <div class="analytics-card">
+                <h3 class="card-title">Technical Rounds</h3>
+                <div class="card-value" id="technicalRounds">0</div>
+                <p class="card-description">Technical interviews</p>
+            </div>
+            
+            <div class="analytics-card">
+                <h3 class="card-title">Second Stage</h3>
+                <div class="card-value" id="secondStage">0</div>
+                <p class="card-description">Advanced to second round</p>
+            </div>
+            
+            <div class="analytics-card">
+                <h3 class="card-title">Final Rounds</h3>
+                <div class="card-value" id="finalRounds">0</div>
+                <p class="card-description">Reached final interviews</p>
+            </div>
+            
+            <div class="analytics-card">
+                <h3 class="card-title">Stage Progression</h3>
+                <div class="card-value" id="stageProgression">0%</div>
+                <p class="card-description">Applications past screening</p>
+            </div>
+        </div>
+
         <!-- Application Tracking Overview -->
         <h2 class="section-header">📋 Application Tracking Overview</h2>
         <div class="analytics-grid">
@@ -297,6 +337,17 @@
             </div>
         </div>
         
+        <!-- Interview Stage Progression Chart -->
+        <div class="chart-container">
+            <div class="chart-title">🎯 Interview Stage Funnel</div>
+            <canvas id="stageFunnelChart"></canvas>
+            <div id="stageFunnelNoData" class="no-data" style="display: none;">
+                <div class="no-data-icon">🎯</div>
+                <div class="no-data-text">No Stage Data</div>
+                <div class="no-data-subtext">Progress through interview stages to see the funnel</div>
+            </div>
+        </div>
+
         <!-- Application Analytics Charts -->
         <div class="chart-grid">
             <div class="chart-container">
@@ -340,8 +391,9 @@
                         <tr style="border-bottom: 2px solid rgba(255,255,255,0.2);">
                             <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 14px;">Company</th>
                             <th style="padding: 16px 12px; text-align: left; font-weight: 600; font-size: 14px;">Job Role</th>
-                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; font-size: 14px;">Status</th>
+                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; font-size: 14px;">Current Stage</th>
                             <th style="padding: 16px 12px; text-align: center; font-weight: 600; font-size: 14px;">Applied Date</th>
+                            <th style="padding: 16px 12px; text-align: center; font-weight: 600; font-size: 14px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="companiesTableBody">
@@ -355,6 +407,41 @@
             </div>
         </div>
         
+        <!-- Detailed Interview Stage Analytics -->
+        <h2 class="section-header">📊 Detailed Stage Analytics</h2>
+        <div class="chart-grid">
+            <div class="chart-container">
+                <div class="chart-title">⏱️ Average Time in Each Stage</div>
+                <canvas id="stageDurationChart"></canvas>
+                <div id="stageDurationNoData" class="no-data" style="display: none;">
+                    <div class="no-data-icon">⏱️</div>
+                    <div class="no-data-text">No Duration Data</div>
+                    <div class="no-data-subtext">Stage progression data needed to show timing</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">📈 Stage Success Rates</div>
+                <canvas id="stageSuccessChart"></canvas>
+                <div id="stageSuccessNoData" class="no-data" style="display: none;">
+                    <div class="no-data-icon">📈</div>
+                    <div class="no-data-text">No Success Rate Data</div>
+                    <div class="no-data-subtext">More applications needed to calculate success rates</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage Progression Trends -->
+        <div class="chart-container">
+            <div class="chart-title">📅 Stage Progression Over Time</div>
+            <canvas id="stageProgressionChart"></canvas>
+            <div id="stageProgressionNoData" class="no-data" style="display: none;">
+                <div class="no-data-icon">📅</div>
+                <div class="no-data-text">No Progression Timeline</div>
+                <div class="no-data-subtext">Stage advancement history needed for timeline</div>
+            </div>
+        </div>
+
         <!-- Interview Performance Charts -->
         <h2 class="section-header">📊 Interview Performance Analytics</h2>
         <div class="chart-grid">
@@ -431,11 +518,13 @@
             Promise.all([
                 fetch('/performance-stats').then(r => r.json()),
                 fetch('/get-score-progress').then(r => r.json()),
-                fetch('/application-stats').then(r => r.json())
-            ]).then(([statsData, progressData, applicationData]) => {
+                fetch('/application-stats').then(r => r.json()),
+                fetch('/stage-analytics').then(r => r.json())
+            ]).then(([statsData, progressData, applicationData, stageData]) => {
                 // Update summary cards
                 updateSummaryCards(statsData);
                 updateApplicationCards(applicationData);
+                updateStageCards(stageData);
                 
                 // Create interview performance charts
                 createScoreProgressChart(progressData);
@@ -447,12 +536,38 @@
                 createApplicationTrendChart(applicationData);
                 createSuccessFunnelChart(applicationData);
                 createTopCompaniesTable(applicationData);
+                createStageFunnelChart(stageData);
+                createStageDurationChart(stageData);
+                createStageSuccessChart(stageData);
+                createStageProgressionChart(stageData);
                 
             }).catch(error => {
                 console.error('Error loading analytics:', error);
                 showNoDataState();
             });
         });
+
+        function updateStageCards(stageData) {
+            const analytics = stageData.analytics || {};
+            const stageDistribution = analytics.stage_distribution || {};
+            
+            document.getElementById('onlineAssessments').textContent = stageDistribution.online_assessment || 0;
+            document.getElementById('phoneScreenings').textContent = stageDistribution.phone_screening || 0;
+            document.getElementById('technicalRounds').textContent = stageDistribution.technical_interview || 0;
+            document.getElementById('secondStage').textContent = stageDistribution.second_stage || 0;
+            document.getElementById('finalRounds').textContent = stageDistribution.final_interview || 0;
+            
+            // Calculate stage progression percentage
+            const totalApps = Object.values(stageDistribution).reduce((sum, count) => sum + count, 0);
+            const pastScreening = (stageDistribution.online_assessment || 0) + 
+                                 (stageDistribution.phone_screening || 0) + 
+                                 (stageDistribution.first_interview || 0) + 
+                                 (stageDistribution.technical_interview || 0) + 
+                                 (stageDistribution.second_stage || 0) + 
+                                 (stageDistribution.final_interview || 0);
+            const progressionRate = totalApps > 0 ? Math.round((pastScreening / totalApps) * 100) : 0;
+            document.getElementById('stageProgression').textContent = progressionRate + '%';
+        }
 
         function updateApplicationCards(data) {
             const appStats = data.application_stats || {};
@@ -790,17 +905,40 @@
                             year: 'numeric'
                         });
                         
-                        // Format status with colors
-                        const statusColors = {
+                        // Format status with colors and better names
+                        const stageColors = {
                             'applied': '#0071e3',
+                            'application_review': '#1d8cf8',
+                            'online_assessment': '#18ce0f',
+                            'phone_screening': '#ffb400',
+                            'first_interview': '#ff8800',
+                            'technical_interview': '#ff6b6b',
+                            'second_stage': '#af52de',
+                            'final_interview': '#ff2d92',
                             'interview_scheduled': '#34c759',
                             'rejected': '#ff3b30',
-                            'offer': '#ff9500',
+                            'offer': '#32d74b',
                             'pending': '#af52de'
                         };
                         
-                        const statusColor = statusColors[app.status] || '#86868b';
-                        const statusText = app.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        const stageNames = {
+                            'applied': 'Applied',
+                            'application_review': 'Under Review',
+                            'online_assessment': 'Online Assessment',
+                            'phone_screening': 'Phone Screen',
+                            'first_interview': 'First Interview',
+                            'technical_interview': 'Technical',
+                            'second_stage': 'Second Stage',
+                            'final_interview': 'Final Round',
+                            'interview_scheduled': 'Interview Scheduled',
+                            'rejected': 'Rejected',
+                            'offer': 'Offer Received',
+                            'pending': 'Pending'
+                        };
+                        
+                        const currentStage = app.interview_stage || app.status;
+                        const stageColor = stageColors[currentStage] || '#86868b';
+                        const stageName = stageNames[currentStage] || currentStage.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
                         
                         row.innerHTML = `
                             <td style="padding: 12px;">
@@ -813,18 +951,32 @@
                             </td>
                             <td style="padding: 12px; text-align: center;">
                                 <span style="
-                                    background: ${statusColor}20; 
-                                    color: ${statusColor}; 
+                                    background: ${stageColor}20; 
+                                    color: ${stageColor}; 
                                     padding: 4px 12px; 
                                     border-radius: 20px; 
                                     font-size: 12px; 
                                     font-weight: 600;
                                     text-transform: uppercase;
                                     letter-spacing: 0.5px;
-                                ">${statusText}</span>
+                                ">${stageName}</span>
                             </td>
                             <td style="padding: 12px; text-align: center; color: #86868b; font-size: 14px;">
                                 ${applicationDate}
+                            </td>
+                            <td style="padding: 12px; text-align: center;">
+                                <div style="display: flex; gap: 8px; justify-content: center;">
+                                    ${currentStage !== 'rejected' && currentStage !== 'offer' ? `
+                                        <button onclick="advanceStage(${app.id}, '${currentStage}')" 
+                                                style="background: ${stageColor}; color: white; border: none; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                                            Next Stage
+                                        </button>
+                                    ` : ''}
+                                    <button onclick="viewStageDetails(${app.id})" 
+                                            style="background: rgba(255,255,255,0.1); color: #f5f5f7; border: none; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                                        Details
+                                    </button>
+                                </div>
                             </td>
                         `;
                         tbody.appendChild(row);
@@ -835,6 +987,375 @@
                     document.getElementById('topCompaniesTable').style.display = 'none';
                     document.getElementById('topCompaniesNoData').style.display = 'flex';
                 });
+        }
+
+        function createStageFunnelChart(stageData) {
+            const ctx = document.getElementById('stageFunnelChart').getContext('2d');
+            const analytics = stageData.analytics || {};
+            const stageDistribution = analytics.stage_distribution || {};
+            
+            if (Object.keys(stageDistribution).length === 0) {
+                document.getElementById('stageFunnelChart').style.display = 'none';
+                document.getElementById('stageFunnelNoData').style.display = 'flex';
+                return;
+            }
+
+            // Define the interview stage progression order
+            const stageOrder = [
+                'applied',
+                'application_review', 
+                'online_assessment',
+                'phone_screening',
+                'first_interview',
+                'technical_interview',
+                'second_stage',
+                'final_interview'
+            ];
+            
+            const stageLabels = {
+                'applied': 'Applied',
+                'application_review': 'Under Review',
+                'online_assessment': 'Online Assessment',
+                'phone_screening': 'Phone Screen',
+                'first_interview': 'First Interview',
+                'technical_interview': 'Technical',
+                'second_stage': 'Second Stage',
+                'final_interview': 'Final Round'
+            };
+            
+            // Get data for each stage
+            const labels = [];
+            const data = [];
+            const colors = [];
+            
+            const stageColors = [
+                '#0071e3', '#1d8cf8', '#18ce0f', '#ffb400',
+                '#ff8800', '#ff6b6b', '#af52de', '#ff2d92'
+            ];
+            
+            stageOrder.forEach((stage, index) => {
+                const count = stageDistribution[stage] || 0;
+                if (count > 0) {
+                    labels.push(stageLabels[stage]);
+                    data.push(count);
+                    colors.push(stageColors[index]);
+                }
+            });
+            
+            if (data.length === 0) {
+                document.getElementById('stageFunnelChart').style.display = 'none';
+                document.getElementById('stageFunnelNoData').style.display = 'flex';
+                return;
+            }
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Applications',
+                        data: data,
+                        backgroundColor: colors,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    indexAxis: 'y',
+                    plugins: {
+                        ...chartOptions.plugins,
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const total = data.reduce((sum, val) => sum + val, 0);
+                                    const percentage = ((context.parsed.x / total) * 100).toFixed(1);
+                                    return `${percentage}% of total applications`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#86868b'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Number of Applications',
+                                color: '#86868b'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#86868b'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createStageDurationChart(stageData) {
+            const ctx = document.getElementById('stageDurationChart').getContext('2d');
+            const analytics = stageData.analytics || {};
+            const stageDurations = analytics.stage_durations || {};
+            
+            if (Object.keys(stageDurations).length === 0) {
+                document.getElementById('stageDurationChart').style.display = 'none';
+                document.getElementById('stageDurationNoData').style.display = 'flex';
+                return;
+            }
+
+            const stageLabels = {
+                'applied': 'Applied',
+                'application_review': 'Under Review',
+                'online_assessment': 'Online Assessment',
+                'phone_screening': 'Phone Screen',
+                'first_interview': 'First Interview',
+                'technical_interview': 'Technical',
+                'second_stage': 'Second Stage',
+                'final_interview': 'Final Round'
+            };
+
+            const labels = [];
+            const data = [];
+            const colors = [];
+
+            const stageColors = [
+                '#0071e3', '#1d8cf8', '#18ce0f', '#ffb400',
+                '#ff8800', '#ff6b6b', '#af52de', '#ff2d92'
+            ];
+
+            let colorIndex = 0;
+            Object.entries(stageDurations).forEach(([stage, duration]) => {
+                labels.push(stageLabels[stage] || stage);
+                data.push(duration);
+                colors.push(stageColors[colorIndex % stageColors.length]);
+                colorIndex++;
+            });
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Average Days',
+                        data: data,
+                        backgroundColor: colors,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    plugins: {
+                        ...chartOptions.plugins,
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.y.toFixed(1)} days on average`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ...chartOptions.scales.y,
+                            title: {
+                                display: true,
+                                text: 'Days',
+                                color: '#86868b'
+                            }
+                        },
+                        x: {
+                            ...chartOptions.scales.x,
+                            title: {
+                                display: true,
+                                text: 'Interview Stages',
+                                color: '#86868b'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createStageSuccessChart(stageData) {
+            const ctx = document.getElementById('stageSuccessChart').getContext('2d');
+            const analytics = stageData.analytics || {};
+            const stageSuccess = analytics.stage_success_rates || {};
+            
+            if (Object.keys(stageSuccess).length === 0) {
+                document.getElementById('stageSuccessChart').style.display = 'none';
+                document.getElementById('stageSuccessNoData').style.display = 'flex';
+                return;
+            }
+
+            const stageLabels = {
+                'applied': 'Applied',
+                'application_review': 'Under Review',
+                'online_assessment': 'Online Assessment',
+                'phone_screening': 'Phone Screen',
+                'first_interview': 'First Interview',
+                'technical_interview': 'Technical',
+                'second_stage': 'Second Stage',
+                'final_interview': 'Final Round'
+            };
+
+            const labels = [];
+            const successRates = [];
+            const totalCounts = [];
+
+            Object.entries(stageSuccess).forEach(([stage, data]) => {
+                labels.push(stageLabels[stage] || stage);
+                successRates.push(data.success_rate);
+                totalCounts.push(data.total);
+            });
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Success Rate (%)',
+                        data: successRates,
+                        borderColor: '#34c759',
+                        backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    plugins: {
+                        ...chartOptions.plugins,
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const stageIndex = context.dataIndex;
+                                    const total = totalCounts[stageIndex];
+                                    return `Total applications: ${total}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ...chartOptions.scales.y,
+                            min: 0,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Success Rate (%)',
+                                color: '#86868b'
+                            }
+                        },
+                        x: {
+                            ...chartOptions.scales.x,
+                            title: {
+                                display: true,
+                                text: 'Interview Stages',
+                                color: '#86868b'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createStageProgressionChart(stageData) {
+            const ctx = document.getElementById('stageProgressionChart').getContext('2d');
+            const analytics = stageData.analytics || {};
+            
+            // This would need additional data from the backend about progression over time
+            // For now, we'll show a placeholder or simulate some data
+            
+            // Simulate progression data (in a real implementation, this would come from the backend)
+            const progressionData = [
+                { month: 'Jan', applied: 10, online_assessment: 6, first_interview: 4, second_stage: 2, offer: 1 },
+                { month: 'Feb', applied: 12, online_assessment: 8, first_interview: 5, second_stage: 3, offer: 1 },
+                { month: 'Mar', applied: 15, online_assessment: 10, first_interview: 7, second_stage: 4, offer: 2 }
+            ];
+            
+            // Check if we have real data, otherwise show no data state
+            if (Object.keys(analytics).length === 0) {
+                document.getElementById('stageProgressionChart').style.display = 'none';
+                document.getElementById('stageProgressionNoData').style.display = 'flex';
+                return;
+            }
+
+            const labels = progressionData.map(item => item.month);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Applied',
+                            data: progressionData.map(item => item.applied),
+                            borderColor: '#0071e3',
+                            backgroundColor: 'rgba(0, 113, 227, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Online Assessment',
+                            data: progressionData.map(item => item.online_assessment),
+                            borderColor: '#18ce0f',
+                            backgroundColor: 'rgba(24, 206, 15, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'First Interview',
+                            data: progressionData.map(item => item.first_interview),
+                            borderColor: '#ff8800',
+                            backgroundColor: 'rgba(255, 136, 0, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Second Stage',
+                            data: progressionData.map(item => item.second_stage),
+                            borderColor: '#af52de',
+                            backgroundColor: 'rgba(175, 82, 222, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Offers',
+                            data: progressionData.map(item => item.offer),
+                            borderColor: '#32d74b',
+                            backgroundColor: 'rgba(50, 215, 75, 0.1)',
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        y: {
+                            ...chartOptions.scales.y,
+                            title: {
+                                display: true,
+                                text: 'Number of Applications',
+                                color: '#86868b'
+                            }
+                        },
+                        x: {
+                            ...chartOptions.scales.x,
+                            title: {
+                                display: true,
+                                text: 'Month',
+                                color: '#86868b'
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function showNoDataState() {
@@ -848,6 +1369,16 @@
             document.getElementById('topCompaniesTable').style.display = 'none';
             document.getElementById('topCompaniesNoData').style.display = 'flex';
             
+            // Stage analytics charts
+            document.getElementById('stageFunnelChart').style.display = 'none';
+            document.getElementById('stageFunnelNoData').style.display = 'flex';
+            document.getElementById('stageDurationChart').style.display = 'none';
+            document.getElementById('stageDurationNoData').style.display = 'flex';
+            document.getElementById('stageSuccessChart').style.display = 'none';
+            document.getElementById('stageSuccessNoData').style.display = 'flex';
+            document.getElementById('stageProgressionChart').style.display = 'none';
+            document.getElementById('stageProgressionNoData').style.display = 'flex';
+            
             // Interview charts
             document.getElementById('scoreProgressChart').style.display = 'none';
             document.getElementById('scoreProgressNoData').style.display = 'flex';
@@ -855,6 +1386,121 @@
             document.getElementById('typePerformanceNoData').style.display = 'flex';
             document.getElementById('scoreDistributionChart').style.display = 'none';
             document.getElementById('scoreDistributionNoData').style.display = 'flex';
+        }
+        
+        // Interview Stage Management Functions
+        function advanceStage(applicationId, currentStage) {
+            // Define next stage mapping
+            const stageProgression = {
+                'applied': 'application_review',
+                'application_review': 'online_assessment',
+                'online_assessment': 'phone_screening',
+                'phone_screening': 'first_interview',
+                'first_interview': 'technical_interview',
+                'technical_interview': 'second_stage',
+                'second_stage': 'final_interview',
+                'final_interview': 'offer'
+            };
+            
+            const nextStage = stageProgression[currentStage];
+            if (!nextStage) {
+                alert('No next stage available');
+                return;
+            }
+            
+            // Show confirmation with stage details input
+            const stageName = nextStage.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            
+            if (nextStage === 'online_assessment') {
+                const dueDate = prompt(`Advancing to ${stageName}. Enter due date (YYYY-MM-DD) or leave blank:`);
+                const platform = prompt('Assessment platform (e.g., HackerRank, Codility):') || 'Online';
+                const details = prompt('Assessment details (optional):') || '';
+                
+                fetch('/advance-stage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        application_id: applicationId,
+                        stage: nextStage,
+                        details: {
+                            due_date: dueDate,
+                            platform: platform,
+                            assessment_details: details
+                        }
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`✅ ${data.message}`);
+                        location.reload(); // Refresh to show updated data
+                    } else {
+                        alert(`❌ ${data.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to advance stage');
+                });
+            } else {
+                // Simple confirmation for other stages
+                if (confirm(`Advance to ${stageName}?`)) {
+                    fetch('/advance-stage', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            application_id: applicationId,
+                            stage: nextStage
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(`✅ ${data.message}`);
+                            location.reload();
+                        } else {
+                            alert(`❌ ${data.error}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to advance stage');
+                    });
+                }
+            }
+        }
+        
+        function viewStageDetails(applicationId) {
+            fetch(`/application-stages/${applicationId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const app = data.application;
+                        const stages = app.interview_stages || [];
+                        
+                        let stageInfo = `Application: ${app.company} - ${app.position}\n`;
+                        stageInfo += `Current Stage: ${app.interview_stage || app.status}\n\n`;
+                        stageInfo += 'Interview History:\n';
+                        
+                        if (stages.length > 0) {
+                            stages.forEach(stage => {
+                                stageInfo += `• ${stage.interview_stage} (${stage.status})\n`;
+                                if (stage.scheduled_date) stageInfo += `  Date: ${stage.scheduled_date}\n`;
+                                if (stage.assessment_details) stageInfo += `  Details: ${stage.assessment_details}\n`;
+                            });
+                        } else {
+                            stageInfo += 'No interview stages recorded yet.';
+                        }
+                        
+                        alert(stageInfo);
+                    } else {
+                        alert(`❌ ${data.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load stage details');
+                });
         }
     </script>
 </body>

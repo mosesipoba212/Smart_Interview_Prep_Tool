@@ -46,6 +46,9 @@ class GmailApplicationSync:
                             # Update existing application
                             self.update_application_from_email(existing_app['id'], email, app_data)
                             updated_applications += 1
+                            
+                            # Check if this email advances the interview stage
+                            self.check_and_advance_stage(existing_app['id'], app_data, email)
                         else:
                             # Create new application
                             app_id = self.create_application_from_email(app_data)
@@ -118,9 +121,41 @@ class GmailApplicationSync:
         """Classify the type of job-related email"""
         text = f"{subject} {body}".lower()
         
-        # Interview invitation patterns
+        # Online assessment patterns
         if any(keyword in text for keyword in [
-            'interview', 'phone screen', 'video call', 'meeting request',
+            'online assessment', 'coding challenge', 'technical assessment',
+            'hackerrank', 'codility', 'leetcode', 'coding test',
+            'online test', 'assessment invitation', 'technical challenge',
+            'programming challenge', 'coding exercise', 'take home test',
+            'online evaluation', 'skills assessment'
+        ]):
+            return 'online_assessment'
+        
+        # Second stage/final round patterns
+        if any(keyword in text for keyword in [
+            'second round', 'second stage', 'final round', 'final interview',
+            'next round', 'final stage', 'onsite interview', 'panel interview',
+            'second interview', 'follow-up interview'
+        ]):
+            return 'second_stage_interview'
+        
+        # Technical interview patterns
+        if any(keyword in text for keyword in [
+            'technical interview', 'technical round', 'technical discussion',
+            'system design', 'architecture interview', 'coding interview'
+        ]):
+            return 'technical_interview'
+        
+        # Phone screening patterns
+        if any(keyword in text for keyword in [
+            'phone screen', 'phone interview', 'screening call',
+            'initial call', 'brief call', 'phone chat'
+        ]):
+            return 'phone_screening'
+        
+        # Interview invitation patterns (general)
+        if any(keyword in text for keyword in [
+            'interview', 'video call', 'meeting request',
             'schedule a call', 'available for', 'interview invitation'
         ]):
             return 'interview_invitation'
@@ -220,11 +255,15 @@ class GmailApplicationSync:
     def determine_application_status(self, email_type: str, subject: str, body: str) -> str:
         """Determine application status based on email content"""
         status_mapping = {
-            'interview_invitation': 'interview_scheduled',
+            'online_assessment': 'online_assessment',
+            'second_stage_interview': 'second_stage',
+            'technical_interview': 'technical_interview',
+            'phone_screening': 'phone_screening',
+            'interview_invitation': 'first_interview',
             'application_confirmation': 'applied',
             'rejection': 'rejected',
             'offer': 'offer',
-            'follow_up': 'under_review'
+            'follow_up': 'application_review'
         }
         
         return status_mapping.get(email_type, 'applied')
@@ -317,6 +356,82 @@ class GmailApplicationSync:
             
         except Exception:
             return 'applied'
+    
+    def check_and_advance_stage(self, app_id: int, app_data: Dict[str, Any], email: Dict[str, Any]):
+        """Check if email indicates stage advancement and update accordingly"""
+        try:
+            email_type = app_data.get('email_type', '')
+            new_stage = app_data.get('status', '')
+            
+            # Only advance for stage-specific email types
+            stage_emails = [
+                'online_assessment', 'second_stage_interview', 'technical_interview',
+                'phone_screening'
+            ]
+            
+            if email_type in stage_emails:
+                # Extract additional details for the stage
+                stage_details = self.extract_stage_details(email_type, email)
+                
+                # Use the application tracker's advance_interview_stage method
+                success = self.app_tracker.advance_interview_stage(app_id, new_stage, stage_details)
+                
+                if success:
+                    print(f"✅ Auto-advanced application {app_id} to {new_stage}")
+                else:
+                    print(f"⚠️ Failed to advance application {app_id} to {new_stage}")
+                    
+        except Exception as e:
+            print(f"Error checking stage advancement: {e}")
+    
+    def extract_stage_details(self, email_type: str, email: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract stage-specific details from email"""
+        subject = email.get('subject', '')
+        body = email.get('body', '')
+        date_received = email.get('date', datetime.now().isoformat())
+        
+        details = {
+            'status': 'scheduled',
+            'platform': 'Email Notification'
+        }
+        
+        if email_type == 'online_assessment':
+            # Extract assessment platform
+            text = f"{subject} {body}".lower()
+            platforms = {
+                'hackerrank': 'HackerRank',
+                'codility': 'Codility', 
+                'leetcode': 'LeetCode',
+                'coderpad': 'CoderPad',
+                'pramp': 'Pramp'
+            }
+            
+            for platform_key, platform_name in platforms.items():
+                if platform_key in text:
+                    details['platform'] = platform_name
+                    break
+            
+            # Try to extract due date
+            due_date_match = re.search(r'(?:due|complete|finish).*?(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', body, re.IGNORECASE)
+            if due_date_match:
+                details['scheduled_date'] = due_date_match.group(1)
+            
+            details['assessment_details'] = f"Assessment invitation received via email on {date_received[:10]}"
+            
+        elif email_type in ['second_stage_interview', 'technical_interview']:
+            # Extract interview details
+            details['interview_type'] = email_type
+            
+            # Try to extract date/time
+            date_match = re.search(r'(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', body)
+            if date_match:
+                details['scheduled_date'] = date_match.group(1)
+            
+            time_match = re.search(r'(\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?)', body, re.IGNORECASE)
+            if time_match:
+                details['scheduled_time'] = time_match.group(1)
+        
+        return details
     
     def get_sync_summary(self) -> Dict[str, Any]:
         """Get summary of synced data"""
