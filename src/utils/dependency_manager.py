@@ -27,8 +27,6 @@ class DependencyManager:
             'openai': {'required': False, 'import_name': 'openai'},
             'docx': {'required': False, 'import_name': 'docx'},
             'matplotlib': {'required': False, 'import_name': 'matplotlib'},
-            'pandas': {'required': False, 'import_name': 'pandas'},
-            'seaborn': {'required': False, 'import_name': 'seaborn'},
             'sqlite3': {'required': False, 'import_name': 'sqlite3'},
         }
         
@@ -44,6 +42,28 @@ class DependencyManager:
                     raise ImportError(f"Required dependency {module_name} not found")
                 else:
                     print(f"⚠️ Optional module {module_name} not available - using fallback")
+            except Exception as e:
+                # Handle other errors (like numpy compatibility issues)
+                self.available_modules[module_name] = None
+                print(f"⚠️ Optional module {module_name} not available - compatibility issue")
+        
+        # Try pandas separately with better error handling
+        try:
+            import pandas
+            self.available_modules['pandas'] = pandas
+            print(f"✅ pandas available")
+        except Exception as e:
+            self.available_modules['pandas'] = None
+            print(f"⚠️ pandas not available - using fallback")
+        
+        # Try seaborn separately
+        try:
+            import seaborn
+            self.available_modules['seaborn'] = seaborn
+            print(f"✅ seaborn available")
+        except Exception as e:
+            self.available_modules['seaborn'] = None
+            print(f"⚠️ seaborn not available - using fallback")
     
     def get_module(self, module_name: str, fallback: Optional[Callable] = None):
         """Get module or return fallback"""

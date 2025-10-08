@@ -19,8 +19,14 @@ from src.utils.error_handler import ErrorCodes, log_error, check_system_health
 from src.utils.dependency_manager import safe_import, get_dependency_status
 
 # Core imports with fallback handling
-from src.email_parser.gmail_service import GmailService
-from src.email_parser.gmail_sync import GmailApplicationSync
+try:
+    from src.email_parser.gmail_service import GmailService
+    from src.email_parser.gmail_sync import GmailApplicationSync
+    GMAIL_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Gmail services not available: {e}")
+    GMAIL_AVAILABLE = False
+    
 from src.performance_tracker.tracker import PerformanceTracker
 from src.interview_detector.detector import InterviewDetector
 from src.question_banks.custom_banks import QuestionBanks
